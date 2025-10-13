@@ -26,7 +26,7 @@ import {
   Chip,
   Rating
 } from '@mui/material';
-import { Grid } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -407,7 +407,7 @@ const Contacts: React.FC = () => {
 
       <Grid container spacing={3}>
         {contacts.map((contact) => (
-          <Grid item xs={12} sm={6} md={4} key={contact._id}>
+          <Grid xs={12} sm={6} md={4} key={contact._id}>
             <Card>
               <CardContent>
                 <Box display="flex" alignItems="center" mb={2}>
@@ -506,7 +506,7 @@ const Contacts: React.FC = () => {
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <FormControl fullWidth>
                   <InputLabel>Type</InputLabel>
                   <Select
@@ -525,7 +525,7 @@ const Contacts: React.FC = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Company (Optional)"
@@ -535,7 +535,7 @@ const Contacts: React.FC = () => {
                 />
               </Grid>
               
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Name"
@@ -545,7 +545,7 @@ const Contacts: React.FC = () => {
                   required
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Email (Optional)"
@@ -556,7 +556,7 @@ const Contacts: React.FC = () => {
                 />
               </Grid>
               
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Phone (Optional)"
@@ -565,7 +565,7 @@ const Contacts: React.FC = () => {
                   onChange={handleChange}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Rating (0-5)"
@@ -577,12 +577,12 @@ const Contacts: React.FC = () => {
                 />
               </Grid>
               
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <Typography variant="h6" gutterBottom>
                   Address (Optional)
                 </Typography>
               </Grid>
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <TextField
                   fullWidth
                   label="Street Address"
@@ -591,7 +591,7 @@ const Contacts: React.FC = () => {
                   onChange={handleChange}
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid xs={12} sm={4}>
                 <TextField
                   fullWidth
                   label="City"
@@ -600,7 +600,7 @@ const Contacts: React.FC = () => {
                   onChange={handleChange}
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid xs={12} sm={4}>
                 <TextField
                   fullWidth
                   label="State"
@@ -609,7 +609,7 @@ const Contacts: React.FC = () => {
                   onChange={handleChange}
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid xs={12} sm={4}>
                 <TextField
                   fullWidth
                   label="Zip Code"
@@ -619,7 +619,7 @@ const Contacts: React.FC = () => {
                 />
               </Grid>
               
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <TextField
                   fullWidth
                   label="Specialties (comma-separated)"
@@ -630,7 +630,7 @@ const Contacts: React.FC = () => {
                 />
               </Grid>
               
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <TextField
                   fullWidth
                   label="Notes"
