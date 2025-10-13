@@ -1,0 +1,1173 @@
+openapi: 3.0.3
+info:
+  title: HomeFlip API
+  description: Production-ready house flipping and rental property management API with advanced contractor verification
+  version: 1.0.0
+  contact:
+    name: HomeFlip Support
+    email: support@homeflip.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.homeflip.com/v1
+    description: Production server
+  - url: https://staging-api.homeflip.com/v1
+    description: Staging server
+  - url: http://localhost:5000/api
+    description: Development server
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  # Health & Monitoring
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Check if the service is healthy
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health/ready:
+    get:
+      tags: [Health]
+      summary: Readiness check
+      description: Check if the service is ready to accept requests
+      security: []
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+        '503':
+          description: Service is not ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health/version:
+    get:
+      tags: [Health]
+      summary: Version information
+      description: Get service version and build information
+      security: []
+      responses:
+        '200':
+          description: Version information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+
+  /health/metrics:
+    get:
+      tags: [Health]
+      summary: System metrics
+      description: Get system performance metrics
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: System metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+
+  # Authentication
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register new user
+      description: Create a new user account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: User login
+      description: Authenticate user and return access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get current user
+      description: Get current authenticated user information
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Properties
+  /properties:
+    get:
+      tags: [Properties]
+      summary: List properties
+      description: Get paginated list of properties
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ANALYZING, UNDER_CONTRACT, IN_PROGRESS, COMPLETED, SOLD, CANCELLED]
+        - name: propertyType
+          in: query
+          schema:
+            type: string
+            enum: [SINGLE_FAMILY, CONDO, TOWNHOUSE, MULTI_FAMILY, COMMERCIAL, LAND, OTHER]
+      responses:
+        '200':
+          description: List of properties
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProperties'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags: [Properties]
+      summary: Create property
+      description: Create a new property
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePropertyRequest'
+      responses:
+        '201':
+          description: Property created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /properties/{id}:
+    get:
+      tags: [Properties]
+      summary: Get property
+      description: Get property by ID
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Property details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
+        '404':
+          description: Property not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags: [Properties]
+      summary: Update property
+      description: Update property by ID
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePropertyRequest'
+      responses:
+        '200':
+          description: Property updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
+        '404':
+          description: Property not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags: [Properties]
+      summary: Delete property
+      description: Soft delete property by ID
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '204':
+          description: Property deleted
+        '404':
+          description: Property not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Contractors
+  /contractors:
+    get:
+      tags: [Contractors]
+      summary: List contractors
+      description: Get paginated list of contractors with scoring
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - name: trade
+          in: query
+          schema:
+            type: string
+            enum: [GENERAL, GC, PLUMBING, ELECTRICAL, HVAC, ROOFING, PAINTING, FLOORING, OTHER]
+        - name: minScore
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 100
+        - name: hasActiveLicense
+          in: query
+          schema:
+            type: boolean
+        - name: hasActiveInsurance
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of contractors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedContractors'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /contractors/{id}:
+    get:
+      tags: [Contractors]
+      summary: Get contractor details
+      description: Get detailed contractor information with scoring
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Contractor details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractorDetails'
+        '404':
+          description: Contractor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /contractors/{id}/explain-score:
+    get:
+      tags: [Contractors]
+      summary: Explain contractor score
+      description: Get detailed explanation of contractor scoring
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Score explanation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoreExplanation'
+        '404':
+          description: Contractor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Admin Operations
+  /admin/compute-scores:
+    post:
+      tags: [Admin]
+      summary: Compute contractor scores
+      description: Trigger recomputation of all contractor scores
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Scores computed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComputeScoresResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/audit:
+    get:
+      tags: [Admin]
+      summary: Get audit logs
+      description: Get system audit logs with filtering
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: object
+          in: query
+          schema:
+            type: string
+        - name: action
+          in: query
+          schema:
+            type: string
+            enum: [CREATE, UPDATE, DELETE, VIEW, LOGIN, LOGOUT, EXPORT, IMPORT]
+        - name: actorId
+          in: query
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAuditLogs'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: Page number (1-based)
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    PageSizeParam:
+      name: pageSize
+      in: query
+      description: Number of items per page
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    SortParam:
+      name: sort
+      in: query
+      description: Sort field and direction (e.g., 'name:asc', 'score:desc')
+      required: false
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9_]+:(asc|desc)$'
+
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Resource ID
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: Error code
+            message:
+              type: string
+              description: Error message
+            details:
+              type: object
+              description: Additional error details
+            requestId:
+              type: string
+              description: Request ID for tracking
+
+    HealthResponse:
+      type: object
+      required: [status, timestamp]
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        uptime:
+          type: number
+          description: Uptime in seconds
+        version:
+          type: string
+        environment:
+          type: string
+
+    ReadinessResponse:
+      type: object
+      required: [status, timestamp]
+      properties:
+        status:
+          type: string
+          enum: [ready, not ready]
+        timestamp:
+          type: string
+          format: date-time
+        checks:
+          type: object
+          properties:
+            database:
+              type: string
+              enum: [ok, error]
+            basicOperations:
+              type: string
+              enum: [ok, error]
+        metrics:
+          type: object
+          properties:
+            totalUsers:
+              type: integer
+
+    VersionResponse:
+      type: object
+      required: [version]
+      properties:
+        version:
+          type: string
+        buildTime:
+          type: string
+          format: date-time
+        gitSha:
+          type: string
+        nodeVersion:
+          type: string
+        environment:
+          type: string
+
+    MetricsResponse:
+      type: object
+      required: [timestamp, metrics]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        metrics:
+          type: object
+          properties:
+            users:
+              type: integer
+            properties:
+              type: integer
+            contractors:
+              type: integer
+            deals:
+              type: integer
+            permits:
+              type: integer
+        system:
+          type: object
+          properties:
+            uptime:
+              type: number
+            memory:
+              type: object
+            cpu:
+              type: object
+
+    AuthResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+          description: JWT access token
+        user:
+          $ref: '#/components/schemas/User'
+
+    RegisterRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)'
+        company:
+          type: string
+          maxLength: 100
+        phone:
+          type: string
+          pattern: '^\\+?[1-9]\\d{1,14}$'
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    User:
+      type: object
+      required: [id, name, email, role, isActive, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        company:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [ADMIN, USER, CONTRACTOR, STAFF]
+        isActive:
+          type: boolean
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+        timezone:
+          type: string
+          default: UTC
+        language:
+          type: string
+          default: en
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Property:
+      type: object
+      required: [id, userId, street, city, state, zipCode, fullAddress, propertyType, status, createdAt]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        street:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zipCode:
+          type: string
+        fullAddress:
+          type: string
+        propertyType:
+          type: string
+          enum: [SINGLE_FAMILY, CONDO, TOWNHOUSE, MULTI_FAMILY, COMMERCIAL, LAND, OTHER]
+        bedrooms:
+          type: integer
+          nullable: true
+        bathrooms:
+          type: integer
+          nullable: true
+        squareFeet:
+          type: integer
+          nullable: true
+        lotSize:
+          type: number
+          nullable: true
+        yearBuilt:
+          type: integer
+          nullable: true
+        condition:
+          type: string
+          enum: [EXCELLENT, GOOD, FAIR, POOR, NEEDS_WORK]
+        purchasePrice:
+          type: number
+          nullable: true
+        estimatedRepairCosts:
+          type: number
+          nullable: true
+        estimatedARV:
+          type: number
+          nullable: true
+        estimatedProfit:
+          type: number
+          nullable: true
+        estimatedROI:
+          type: number
+          nullable: true
+        estimatedTimeline:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum: [ANALYZING, UNDER_CONTRACT, IN_PROGRESS, COMPLETED, SOLD, CANCELLED]
+        notes:
+          type: string
+          nullable: true
+        images:
+          type: array
+          items:
+            type: string
+        documents:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreatePropertyRequest:
+      type: object
+      required: [street, city, state, zipCode, propertyType]
+      properties:
+        street:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zipCode:
+          type: string
+        propertyType:
+          type: string
+          enum: [SINGLE_FAMILY, CONDO, TOWNHOUSE, MULTI_FAMILY, COMMERCIAL, LAND, OTHER]
+        bedrooms:
+          type: integer
+        bathrooms:
+          type: integer
+        squareFeet:
+          type: integer
+        lotSize:
+          type: number
+        yearBuilt:
+          type: integer
+        condition:
+          type: string
+          enum: [EXCELLENT, GOOD, FAIR, POOR, NEEDS_WORK]
+        purchasePrice:
+          type: number
+        estimatedRepairCosts:
+          type: number
+        estimatedARV:
+          type: number
+        notes:
+          type: string
+
+    UpdatePropertyRequest:
+      type: object
+      properties:
+        street:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zipCode:
+          type: string
+        propertyType:
+          type: string
+          enum: [SINGLE_FAMILY, CONDO, TOWNHOUSE, MULTI_FAMILY, COMMERCIAL, LAND, OTHER]
+        bedrooms:
+          type: integer
+        bathrooms:
+          type: integer
+        squareFeet:
+          type: integer
+        lotSize:
+          type: number
+        yearBuilt:
+          type: integer
+        condition:
+          type: string
+          enum: [EXCELLENT, GOOD, FAIR, POOR, NEEDS_WORK]
+        purchasePrice:
+          type: number
+        estimatedRepairCosts:
+          type: number
+        estimatedARV:
+          type: number
+        status:
+          type: string
+          enum: [ANALYZING, UNDER_CONTRACT, IN_PROGRESS, COMPLETED, SOLD, CANCELLED]
+        notes:
+          type: string
+
+    PaginatedProperties:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Property'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    Pagination:
+      type: object
+      required: [page, pageSize, total, totalPages]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean
+
+    ContractorDetails:
+      type: object
+      required: [id, name, overallScore, overallGrade]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        companyName:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        website:
+          type: string
+          nullable: true
+        trades:
+          type: array
+          items:
+            type: string
+        yearsInBusiness:
+          type: integer
+          nullable: true
+        totalProjects:
+          type: integer
+        totalValue:
+          type: number
+          nullable: true
+        overallScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        overallGrade:
+          type: string
+          enum: [A, B, C, D, F]
+        riskScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        insuranceScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        experienceScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        reviewCount:
+          type: integer
+        projectCount:
+          type: integer
+        permitCount:
+          type: integer
+        licenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractorLicense'
+        policies:
+          type: array
+          items:
+            $ref: '#/components/schemas/InsurancePolicy'
+        legalEvents:
+          type: array
+          items:
+            $ref: '#/components/schemas/LegalEvent'
+
+    ContractorLicense:
+      type: object
+      required: [id, number, state, status]
+      properties:
+        id:
+          type: string
+        number:
+          type: string
+        state:
+          type: string
+        boardName:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [ACTIVE, EXPIRED, SUSPENDED, REVOKED, PENDING]
+        adminVerified:
+          type: boolean
+        verifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+        expiresOn:
+          type: string
+          format: date-time
+          nullable: true
+        sourceUrl:
+          type: string
+          nullable: true
+
+    InsurancePolicy:
+      type: object
+      required: [id, type, insurerName]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [GL, WC, AUTO, UMBRELLA, OTHER]
+        insurerName:
+          type: string
+        policyNumber:
+          type: string
+          nullable: true
+        coverageEachOccur:
+          type: number
+          nullable: true
+        coverageAggregate:
+          type: number
+          nullable: true
+        expiresOn:
+          type: string
+          format: date-time
+          nullable: true
+        brokerName:
+          type: string
+          nullable: true
+        certificateUrl:
+          type: string
+          nullable: true
+
+    LegalEvent:
+      type: object
+      required: [id, type, severity, title]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [LAWSUIT, VIOLATION, COMPLAINT, OSHA_VIOLATION, BBB_COMPLAINT, OTHER]
+        severity:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        filedOn:
+          type: string
+          format: date-time
+          nullable: true
+        resolvedOn:
+          type: string
+          format: date-time
+          nullable: true
+        sourceUrl:
+          type: string
+          nullable: true
+
+    PaginatedContractors:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractorDetails'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    ScoreExplanation:
+      type: object
+      required: [contractorId, overallScore, breakdown]
+      properties:
+        contractorId:
+          type: string
+        overallScore:
+          type: integer
+        grade:
+          type: string
+        breakdown:
+          type: object
+          properties:
+            reviewScore:
+              type: number
+            permitScore:
+              type: number
+            experienceScore:
+              type: number
+            riskScore:
+              type: number
+            insuranceScore:
+              type: number
+        subscores:
+          type: object
+          properties:
+            quality:
+              type: number
+            onTime:
+              type: number
+            budget:
+              type: number
+            safety:
+              type: number
+            communication:
+              type: number
+        factors:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              value:
+                type: number
+              weight:
+                type: number
+              description:
+                type: string
+
+    ComputeScoresResponse:
+      type: object
+      required: [message, results, totalProcessed]
+      properties:
+        message:
+          type: string
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              contractorId:
+                type: string
+              name:
+                type: string
+              score:
+                type: integer
+              grade:
+                type: string
+        totalProcessed:
+          type: integer
+
+    PaginatedAuditLogs:
+      type: object
+      required: [auditLogs, pagination]
+      properties:
+        auditLogs:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    AuditLog:
+      type: object
+      required: [id, action, targetType, targetId, createdAt]
+      properties:
+        id:
+          type: string
+        actorId:
+          type: string
+          nullable: true
+        action:
+          type: string
+          enum: [CREATE, UPDATE, DELETE, VIEW, LOGIN, LOGOUT, EXPORT, IMPORT]
+        targetType:
+          type: string
+        targetId:
+          type: string
+        meta:
+          type: object
+        ipAddress:
+          type: string
+          nullable: true
+        userAgent:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        actor:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+
+tags:
+  - name: Health
+    description: Health check and monitoring endpoints
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Properties
+    description: Property management operations
+  - name: Contractors
+    description: Contractor verification and scoring
+  - name: Admin
+    description: Administrative operations
