@@ -148,13 +148,6 @@ const Deals: React.FC = () => {
     }));
   };
 
-  const handleSelectChange = (e: any) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
