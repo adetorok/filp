@@ -127,10 +127,21 @@ const Properties: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const buildFullAddress = (addr: { street: string; city: string; state: string; zipCode: string }) =>
+        [addr.street, addr.city, addr.state, addr.zipCode].filter(Boolean).join(', ');
+
+      const payload = {
+        ...formData,
+        address: {
+          ...formData.address,
+          fullAddress: buildFullAddress(formData.address)
+        }
+      } as any; // conforms to Partial<Property> expected by context
+
       if (editingProperty) {
-        await updateProperty(editingProperty._id, formData);
+        await updateProperty(editingProperty._id, payload);
       } else {
-        await createProperty(formData);
+        await createProperty(payload);
       }
       handleClose();
     } catch (error) {
