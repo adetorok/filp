@@ -139,6 +139,14 @@ const Deals: React.FC = () => {
     }));
   };
 
+  const handleSelectChange = (e: any) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -289,7 +297,7 @@ const Deals: React.FC = () => {
                   <Select
                     name="propertyId"
                     value={formData.propertyId}
-                    onChange={handleChange}
+                    onChange={handleSelectChange}
                     required
                   >
                     {properties.map((property) => (
@@ -387,7 +395,7 @@ const Deals: React.FC = () => {
                   <Select
                     name="status"
                     value={formData.status}
-                    onChange={handleChange}
+                    onChange={handleSelectChange}
                   >
                     <MenuItem value="Analyzing">Analyzing</MenuItem>
                     <MenuItem value="Under Contract">Under Contract</MenuItem>

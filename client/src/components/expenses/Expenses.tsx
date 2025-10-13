@@ -132,6 +132,14 @@ const Expenses: React.FC = () => {
     }));
   };
 
+  const handleSelectChange = (e: any) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -290,7 +298,7 @@ const Expenses: React.FC = () => {
                   <Select
                     name="propertyId"
                     value={formData.propertyId}
-                    onChange={handleChange}
+                    onChange={handleSelectChange}
                     required
                   >
                     {properties.map((property) => (
@@ -320,7 +328,7 @@ const Expenses: React.FC = () => {
                   <Select
                     name="category"
                     value={formData.category}
-                    onChange={handleChange}
+                    onChange={handleSelectChange}
                     required
                   >
                     <MenuItem value="Acquisition">Acquisition</MenuItem>
@@ -388,7 +396,7 @@ const Expenses: React.FC = () => {
                   <Select
                     name="paymentMethod"
                     value={formData.paymentMethod}
-                    onChange={handleChange}
+                    onChange={handleSelectChange}
                   >
                     <MenuItem value="Cash">Cash</MenuItem>
                     <MenuItem value="Check">Check</MenuItem>
