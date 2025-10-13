@@ -1,0 +1,11 @@
+# Ignore backend files for Vercel (frontend only)
+server/
+prisma/
+package.json
+package-lock.json
+node_modules/
+*.log
+.env
+.env.local
+.env.production
+.env.development

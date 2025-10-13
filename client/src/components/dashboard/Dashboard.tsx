@@ -10,7 +10,8 @@ import {
   ListItem,
   ListItemText,
   Chip,
-  CircularProgress
+  CircularProgress,
+  Button
 } from '@mui/material';
 import {
   Home as HomeIcon,
@@ -20,6 +21,11 @@ import {
 } from '@mui/icons-material';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
+import { apiConfig } from '../../config/api';
+import * as Sentry from '@sentry/react';
+
+// Configure axios with base URL
+axios.defaults.baseURL = apiConfig.baseURL;
 
 interface DashboardStats {
   propertyStats: Array<{ _id: string; count: number }>;
@@ -71,11 +77,30 @@ const Dashboard: React.FC = () => {
     );
   }
 
+  // Add this button component to test Sentry's error tracking
+  const ErrorButton = () => {
+    return (
+      <Button
+        variant="contained"
+        color="error"
+        onClick={() => {
+          throw new Error('This is your first error!');
+        }}
+        sx={{ mb: 2 }}
+      >
+        Break the world
+      </Button>
+    );
+  };
+
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
         Dashboard
       </Typography>
+      
+      {/* Sentry Error Testing Button */}
+      <ErrorButton />
       
       <Grid container spacing={3}>
         {/* Property Status Chart */}

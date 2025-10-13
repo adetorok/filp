@@ -8,7 +8,7 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "nodemon server/index.js",
     "client": "cd client && npm start",
-    "build": "cd client && npm run build",
+    "build": "npm ci && npx prisma generate && npx prisma migrate deploy && cd client && npm ci && npm run build && cd ..",
     "install-all": "npm install && cd client && npm install",
     "test": "jest",
     "test:api": "jest server/tests/",
@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.17.1",
+    "@sentry/node": "^10.19.0",
     "bcryptjs": "^2.4.3",
     "bull": "^4.16.5",
     "cors": "^2.8.5",

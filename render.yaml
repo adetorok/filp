@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: homeflip-api
+    env: node
+    plan: free
+    buildCommand: npm ci && npx prisma generate && npx prisma migrate deploy && cd client && npm ci && npm run build && cd ..
+    startCommand: node server/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: homeflip-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: REACT_APP_API_URL
+        value: https://homeflip-api.onrender.com
+      - key: REACT_APP_SENTRY_DSN
+        value: https://bc9fd595b3761684158e312f0e7a023d@o4510179879092224.ingest.us.sentry.io/4510179922214913
+      - key: SENTRY_DSN_BACKEND
+        value: https://bc9fd595b3761684158e312f0e7a023d@o4510179879092224.ingest.us.sentry.io/4510179922214913
+      - key: FRONTEND_URL
+        value: https://homeflip-api.onrender.com
+
+  - type: pserv
+    name: homeflip-db
+    env: postgresql
+    plan: free
+    region: oregon

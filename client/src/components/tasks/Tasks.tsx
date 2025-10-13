@@ -148,6 +148,14 @@ const Tasks: React.FC = () => {
     }));
   };
 
+  const handleSelectChange = (e: any) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -365,7 +373,7 @@ const Tasks: React.FC = () => {
                   <Select
                     name="propertyId"
                     value={formData.propertyId}
-                    onChange={handleChange}
+                    onChange={handleSelectChange}
                     required
                   >
                     {properties.map((property) => (
