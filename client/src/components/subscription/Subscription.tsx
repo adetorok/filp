@@ -190,7 +190,7 @@ const Subscription: React.FC = () => {
               <Chip
                 label={getStatusText(subscription.status)}
                 color={getStatusColor(subscription.status) as any}
-                size="large"
+                size="medium"
               />
             </Box>
 
