@@ -46,7 +46,7 @@ root.render(
     <div>
       <h2>Something went wrong!</h2>
       <details style={{ whiteSpace: 'pre-wrap' }}>
-        {error && error.toString()}
+        {error ? String(error) : 'Unknown error'}
       </details>
       <button onClick={resetError}>Try again</button>
     </div>

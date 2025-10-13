@@ -426,7 +426,7 @@ const Tasks: React.FC = () => {
                   <Select
                     name="category"
                     value={formData.category}
-                    onChange={handleChange}
+                    onChange={handleSelectChange}
                     required
                   >
                     <MenuItem value="Inspection">Inspection</MenuItem>
@@ -453,7 +453,7 @@ const Tasks: React.FC = () => {
                   <Select
                     name="priority"
                     value={formData.priority}
-                    onChange={handleChange}
+                    onChange={handleSelectChange}
                   >
                     <MenuItem value="Low">Low</MenuItem>
                     <MenuItem value="Medium">Medium</MenuItem>
