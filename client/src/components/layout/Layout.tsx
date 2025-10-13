@@ -218,10 +218,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {user?.name?.charAt(0) || 'U'}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, truncate: true }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user?.name || 'User'}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ truncate: true }}>
+            <Typography variant="caption" color="text.secondary" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user?.email || 'user@example.com'}
             </Typography>
           </Box>
