@@ -1,0 +1,7 @@
+[build]
+  base = "client"
+  command = "npm ci --legacy-peer-deps && npm run build"
+  publish = "build"
+
+[build.environment]
+  NODE_VERSION = "20.11.1"   # Pin LTS
