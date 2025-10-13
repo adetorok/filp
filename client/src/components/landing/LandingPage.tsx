@@ -11,6 +11,7 @@ import {
   Paper,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   AppBar,
@@ -322,20 +323,30 @@ const LandingPage: React.FC = () => {
           </Box>
           <Divider />
           <MuiList>
-            <ListItem button onClick={() => { document.getElementById('features')?.scrollIntoView(); handleDrawerToggle(); }}>
-              <ListItemText primary="Features" />
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => { document.getElementById('features')?.scrollIntoView(); handleDrawerToggle(); }}>
+                <ListItemText primary="Features" />
+              </ListItemButton>
             </ListItem>
-            <ListItem button onClick={() => { document.getElementById('pricing')?.scrollIntoView(); handleDrawerToggle(); }}>
-              <ListItemText primary="Pricing" />
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => { document.getElementById('pricing')?.scrollIntoView(); handleDrawerToggle(); }}>
+                <ListItemText primary="Pricing" />
+              </ListItemButton>
             </ListItem>
-            <ListItem button onClick={() => { document.getElementById('help')?.scrollIntoView(); handleDrawerToggle(); }}>
-              <ListItemText primary="Help" />
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => { document.getElementById('help')?.scrollIntoView(); handleDrawerToggle(); }}>
+                <ListItemText primary="Help" />
+              </ListItemButton>
             </ListItem>
-            <ListItem button onClick={() => { navigate('/register'); handleDrawerToggle(); }}>
-              <ListItemText primary="Sign Up" />
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => { navigate('/register'); handleDrawerToggle(); }}>
+                <ListItemText primary="Sign Up" />
+              </ListItemButton>
             </ListItem>
-            <ListItem button onClick={() => { navigate('/login'); handleDrawerToggle(); }}>
-              <ListItemText primary="Login" />
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => { navigate('/login'); handleDrawerToggle(); }}>
+                <ListItemText primary="Login" />
+              </ListItemButton>
             </ListItem>
           </MuiList>
         </Box>
