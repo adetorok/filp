@@ -85,18 +85,10 @@ const requestId = (req, res, next) => {
   next();
 };
 
-// Response time middleware
+// Response time middleware - disabled to prevent headers sent errors
 const responseTime = (req, res, next) => {
-  const start = Date.now();
-  
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    // Don't set headers after response is finished
-    if (!res.headersSent) {
-      res.set('X-Response-Time', `${duration}ms`);
-    }
-  });
-  
+  // Just pass through without setting response time headers
+  // to avoid ERR_HTTP_HEADERS_SENT errors
   next();
 };
 
