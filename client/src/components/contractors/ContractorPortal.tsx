@@ -30,7 +30,8 @@ import {
   Stepper,
   Step,
   StepLabel,
-  LinearProgress
+  LinearProgress,
+  Rating
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
