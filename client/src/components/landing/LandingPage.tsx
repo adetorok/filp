@@ -8,29 +8,29 @@ import {
   Card,
   CardContent,
   CardActions,
-  Paper,
+  AppBar,
+  Toolbar,
+  IconButton,
+  Drawer,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  AppBar,
-  Toolbar,
-  IconButton,
-  Drawer,
-  List as MuiList,
   Divider,
   Chip,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Alert,
-  Snackbar
+  Snackbar,
+  Stack,
+  Avatar,
+  Paper,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -45,28 +45,34 @@ import {
   Support as SupportIcon,
   Email as EmailIcon,
   Phone as PhoneIcon,
-  ExpandMore as ExpandMoreIcon,
   Star as StarIcon,
   Security as SecurityIcon,
   Speed as SpeedIcon,
-  HomeWork as HomeWorkIcon,
   Analytics as AnalyticsIcon,
   AccountBalance as AccountBalanceIcon,
   Build as BuildIcon,
-  Timeline as TimelineIcon
+  Timeline as TimelineIcon,
+  ArrowForward as ArrowForwardIcon,
+  PlayArrow as PlayArrowIcon,
+  People as PeopleIcon,
+  Business as BusinessIcon,
+  Verified as VerifiedIcon,
+  AutoAwesome as AutoAwesomeIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [contactForm, setContactForm] = useState({
     name: '',
     email: '',
     message: ''
   });
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const navigate = useNavigate();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -74,224 +80,179 @@ const LandingPage: React.FC = () => {
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle contact form submission
     setSnackbarOpen(true);
     setContactOpen(false);
     setContactForm({ name: '', email: '', message: '' });
-  };
-
-  const handleContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setContactForm({
-      ...contactForm,
-      [e.target.name]: e.target.value
-    });
   };
 
   const features = [
     {
       icon: <HomeIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
       title: 'Property Management',
-      description: 'Track all your properties with detailed information, photos, and documents.'
+      description: 'Track all your properties with detailed analytics, photos, and financial projections.',
+      color: 'primary'
     },
     {
-      icon: <TrendingUpIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
+      icon: <TrendingUpIcon sx={{ fontSize: 40, color: 'success.main' }} />,
       title: 'Deal Analysis',
-      description: 'Analyze potential deals with comprehensive ROI calculations and market analysis.'
+      description: 'Analyze potential deals with advanced ROI calculations and market comparisons.',
+      color: 'success'
     },
     {
-      icon: <ReceiptIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
+      icon: <ReceiptIcon sx={{ fontSize: 40, color: 'warning.main' }} />,
       title: 'Expense Tracking',
-      description: 'Track all expenses by category, vendor, and property with receipt management.'
+      description: 'Monitor all project expenses with detailed categorization and reporting.',
+      color: 'warning'
     },
     {
-      icon: <AssignmentIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
-      title: 'Project Management',
-      description: 'Manage tasks, timelines, and contractors for each renovation project.'
+      icon: <AssignmentIcon sx={{ fontSize: 40, color: 'secondary.main' }} />,
+      title: 'Task Management',
+      description: 'Organize and track renovation tasks with deadlines and progress monitoring.',
+      color: 'secondary'
     },
     {
-      icon: <HomeWorkIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
-      title: 'Rental Management',
-      description: 'Complete rental property management with tenant tracking, income/expense management, and lease management. (PRO Feature)'
+      icon: <ContactsIcon sx={{ fontSize: 40, color: 'info.main' }} />,
+      title: 'Contractor Network',
+      description: 'Access verified contractors with ratings, reviews, and work history.',
+      color: 'info'
     },
     {
-      icon: <ContactsIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
-      title: 'Contact Management',
-      description: 'Organize contractors, vendors, agents, and other business contacts.'
-    },
-    {
-      icon: <AssessmentIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
-      title: 'Reporting & Analytics',
-      description: 'Generate detailed reports on profits, expenses, and project performance.'
+      icon: <AssessmentIcon sx={{ fontSize: 40, color: 'error.main' }} />,
+      title: 'Advanced Reports',
+      description: 'Generate comprehensive reports for taxes, investors, and project analysis.',
+      color: 'error'
     }
   ];
 
   const pricingPlans = [
     {
-      name: 'Free',
-      price: '$0',
+      name: 'Starter',
+      price: 'Free',
       period: 'First 6 months',
-      description: 'Perfect for getting started with your first project',
+      description: 'Perfect for your first project',
       features: [
-        '1 Project',
-        'Basic property management',
-        'Deal analysis tools',
-        'Expense tracking',
-        'Task management',
-        'Basic reporting',
-        'Email support'
+        '1 Property',
+        'Basic Analytics',
+        'Expense Tracking',
+        'Task Management',
+        'Email Support'
       ],
-      popular: false,
       buttonText: 'Get Started Free',
-      buttonVariant: 'outlined' as const
+      buttonVariant: 'outlined' as const,
+      popular: false
     },
     {
-      name: 'Pro',
+      name: 'Professional',
       price: '$29.99',
       period: 'per month',
       description: 'For serious real estate investors',
       features: [
-        'Unlimited projects',
-        '🏠 Rental Management System',
-        'Advanced analytics',
-        'Custom reporting',
-        'Priority support',
-        'API access',
-        'Team collaboration',
-        'Advanced deal analysis',
-        'Market data integration',
-        'Document management',
-        'Mobile app access'
+        'Unlimited Properties',
+        'Advanced Analytics',
+        'Contractor Marketplace',
+        'Rental Management',
+        'Priority Support',
+        'Custom Reports',
+        'API Access'
       ],
-      popular: true,
-      buttonText: 'Start Pro Trial',
-      buttonVariant: 'contained' as const
+      buttonText: 'Start Free Trial',
+      buttonVariant: 'contained' as const,
+      popular: true
     }
   ];
 
-  const rentalPlans = [
-    {
-      name: 'Rental Basic',
-      price: '$19.99',
-      period: 'per month',
-      description: 'For 1-2 rental properties',
-      features: [
-        'Up to 2 rental properties',
-        'Tenant management',
-        'Rental income tracking',
-        'Basic expense tracking',
-        'Lease management',
-        'Maintenance requests',
-        'Basic reporting',
-        'Email support'
-      ],
-      buttonText: 'Start Rental Basic',
-      buttonVariant: 'outlined' as const
-    },
-    {
-      name: 'Rental Premium',
-      price: '$39.99',
-      period: 'per month',
-      description: 'For 3-10 rental properties',
-      features: [
-        'Up to 10 rental properties',
-        'Advanced tenant management',
-        'Complete financial tracking',
-        'APOD reports',
-        'Schedule E preparation',
-        'Legal document templates',
-        'Advanced reporting',
-        'Priority support',
-        'API access',
-        'Team collaboration',
-        'Mobile app access'
-      ],
-      popular: true,
-      buttonText: 'Start Rental Premium',
-      buttonVariant: 'contained' as const
-    }
-  ];
-
-  const faqs = [
-    {
-      question: 'How does the free trial work?',
-      answer: 'You get full access to all features for your first project for 6 months completely free. No credit card required to start.'
-    },
-    {
-      question: 'What happens after the free trial?',
-      answer: 'After 6 months, you can continue with the Pro plan at $29.99/month for your first project, and $4.99/month for each additional project.'
-    },
-    {
-      question: 'Can I cancel anytime?',
-      answer: 'Yes, you can cancel your subscription at any time. You\'ll continue to have access until the end of your billing period.'
-    },
-    {
-      question: 'What\'s the difference between Pro and Rental plans?',
-      answer: 'Pro plan includes house flipping tools + rental management. Rental plans are focused specifically on rental property management with tiered pricing based on the number of properties.'
-    },
-    {
-      question: 'Can I switch between plans?',
-      answer: 'Yes, you can upgrade or downgrade your plan at any time. Changes take effect on your next billing cycle.'
-    },
-    {
-      question: 'Is my data secure?',
-      answer: 'Absolutely. We use bank-level encryption and security measures to protect your data. We never share your information with third parties.'
-    },
-    {
-      question: 'Do you offer team accounts?',
-      answer: 'Yes, Pro accounts include team collaboration features. You can invite team members and assign different permission levels.'
-    },
-    {
-      question: 'What kind of support do you provide?',
-      answer: 'Free users get email support, while Pro users get priority support with faster response times and phone support for urgent issues.'
-    }
+  const stats = [
+    { number: '10,000+', label: 'Properties Managed' },
+    { number: '$2.5B+', label: 'Deal Value Tracked' },
+    { number: '98%', label: 'Customer Satisfaction' },
+    { number: '24/7', label: 'Support Available' }
   ];
 
   const testimonials = [
     {
       name: 'Sarah Johnson',
       role: 'Real Estate Investor',
-      content: 'HomeFlip has transformed how I manage my flip projects. The deal analysis tools helped me avoid a bad investment that would have cost me $50k.',
-      rating: 5
+      content: 'This platform transformed how I manage my flip projects. The analytics are incredible!',
+      avatar: 'SJ'
     },
     {
       name: 'Mike Chen',
       role: 'Property Developer',
-      content: 'The expense tracking and reporting features are incredible. I can see exactly where every dollar goes and optimize my profits.',
-      rating: 5
+      content: 'The contractor marketplace saved me thousands in vetting costs. Highly recommended!',
+      avatar: 'MC'
     },
     {
-      name: 'Lisa Rodriguez',
-      role: 'House Flipper',
-      content: 'The project management tools keep me organized and on schedule. My projects are completing 20% faster than before.',
-      rating: 5
+      name: 'Emily Rodriguez',
+      role: 'Investment Group',
+      content: 'Finally, a tool that scales with our growing portfolio. The reporting is top-notch.',
+      avatar: 'ER'
     }
   ];
 
+  const drawer = (
+    <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
+      <List>
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => navigate('/')}>
+            <ListItemText primary="Home" />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => document.getElementById('features')?.scrollIntoView()}>
+            <ListItemText primary="Features" />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => document.getElementById('pricing')?.scrollIntoView()}>
+            <ListItemText primary="Pricing" />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => setContactOpen(true)}>
+            <ListItemText primary="Contact" />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => navigate('/login')}>
+            <ListItemText primary="Login" />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => navigate('/register')}>
+            <ListItemText primary="Get Started" />
+          </ListItemButton>
+        </ListItem>
+      </List>
+    </Box>
+  );
+
   return (
-    <Box>
-      {/* Navigation */}
-      <AppBar position="fixed" sx={{ backgroundColor: 'white', color: 'text.primary', boxShadow: 1 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {/* Header */}
+      <AppBar position="sticky" elevation={0} sx={{ backgroundColor: 'background.paper', borderBottom: '1px solid', borderColor: 'divider' }}>
         <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold', color: 'primary.main' }}>
-            HomeFlip
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 700, color: 'primary.main' }}>
+            HomeFlip Pro
           </Typography>
-          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2 }}>
-            <Button color="inherit" onClick={() => document.getElementById('features')?.scrollIntoView()}>
-              Features
-            </Button>
-            <Button color="inherit" onClick={() => document.getElementById('pricing')?.scrollIntoView()}>
-              Pricing
-            </Button>
-            <Button color="inherit" onClick={() => document.getElementById('help')?.scrollIntoView()}>
-              Help
-            </Button>
-            <Button variant="outlined" onClick={() => navigate('/register')}>
-              Sign Up
-            </Button>
-            <Button variant="contained" onClick={() => navigate('/login')}>
-              Login
-            </Button>
-          </Box>
+          {!isMobile && (
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <Button color="inherit" onClick={() => document.getElementById('features')?.scrollIntoView()}>
+                Features
+              </Button>
+              <Button color="inherit" onClick={() => document.getElementById('pricing')?.scrollIntoView()}>
+                Pricing
+              </Button>
+              <Button color="inherit" onClick={() => setContactOpen(true)}>
+                Contact
+              </Button>
+              <Button variant="outlined" onClick={() => navigate('/login')}>
+                Login
+              </Button>
+              <Button variant="contained" onClick={() => navigate('/register')}>
+                Get Started
+              </Button>
+            </Box>
+          )}
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -304,75 +265,53 @@ const LandingPage: React.FC = () => {
         </Toolbar>
       </AppBar>
 
-      {/* Mobile Drawer */}
       <Drawer
         variant="temporary"
+        anchor="right"
         open={mobileOpen}
         onClose={handleDrawerToggle}
         ModalProps={{ keepMounted: true }}
         sx={{ display: { xs: 'block', md: 'none' } }}
       >
-        <Box sx={{ width: 250 }}>
-          <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6" color="primary.main" fontWeight="bold">
-              HomeFlip
-            </Typography>
-            <IconButton onClick={handleDrawerToggle}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
-          <Divider />
-          <MuiList>
-            <ListItem disablePadding>
-              <ListItemButton onClick={() => { document.getElementById('features')?.scrollIntoView(); handleDrawerToggle(); }}>
-                <ListItemText primary="Features" />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton onClick={() => { document.getElementById('pricing')?.scrollIntoView(); handleDrawerToggle(); }}>
-                <ListItemText primary="Pricing" />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton onClick={() => { document.getElementById('help')?.scrollIntoView(); handleDrawerToggle(); }}>
-                <ListItemText primary="Help" />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton onClick={() => { navigate('/register'); handleDrawerToggle(); }}>
-                <ListItemText primary="Sign Up" />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton onClick={() => { navigate('/login'); handleDrawerToggle(); }}>
-                <ListItemText primary="Login" />
-              </ListItemButton>
-            </ListItem>
-          </MuiList>
-        </Box>
+        {drawer}
       </Drawer>
 
       {/* Hero Section */}
-      <Box sx={{ pt: 10, pb: 8, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          py: { xs: 8, md: 12 },
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
         <Container maxWidth="lg">
           <Grid container spacing={4} alignItems="center">
-            <Grid xs={12} md={6}>
-              <Typography variant="h2" component="h1" gutterBottom fontWeight="bold">
-                The Complete House Flipping Software
+            <Grid item xs={12} md={6}>
+              <Typography variant="h2" component="h1" gutterBottom sx={{ fontWeight: 700, mb: 3 }}>
+                Transform Your Real Estate Investment Journey
               </Typography>
-              <Typography variant="h5" gutterBottom sx={{ mb: 4, opacity: 0.9 }}>
-                Manage properties, track expenses, analyze deals, and maximize profits with our all-in-one platform.
+              <Typography variant="h5" sx={{ mb: 4, opacity: 0.9, lineHeight: 1.6 }}>
+                The all-in-one platform for property flippers, investors, and real estate professionals. 
+                Manage deals, track expenses, and grow your portfolio with confidence.
               </Typography>
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 4 }}>
                 <Button
                   variant="contained"
                   size="large"
                   onClick={() => navigate('/register')}
                   sx={{ 
-                    backgroundColor: 'white', 
-                    color: 'primary.main',
-                    '&:hover': { backgroundColor: 'grey.100' }
+                    py: 2, 
+                    px: 4,
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    '&:hover': {
+                      background: 'rgba(255, 255, 255, 0.3)',
+                    }
                   }}
+                  endIcon={<ArrowForwardIcon />}
                 >
                   Start Free Trial
                 </Button>
@@ -380,19 +319,52 @@ const LandingPage: React.FC = () => {
                   variant="outlined"
                   size="large"
                   onClick={() => document.getElementById('features')?.scrollIntoView()}
-                  sx={{ borderColor: 'white', color: 'white' }}
+                  sx={{ 
+                    py: 2, 
+                    px: 4,
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    color: 'white',
+                    '&:hover': {
+                      borderColor: 'white',
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    }
+                  }}
+                  startIcon={<PlayArrowIcon />}
                 >
-                  Learn More
+                  Watch Demo
                 </Button>
-              </Box>
+              </Stack>
+              <Stack direction="row" spacing={4} sx={{ mt: 4 }}>
+                {stats.slice(0, 2).map((stat, index) => (
+                  <Box key={index} textAlign="center">
+                    <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+                      {stat.number}
+                    </Typography>
+                    <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                      {stat.label}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
             </Grid>
-            <Grid xs={12} md={6}>
-              <Box sx={{ textAlign: 'center' }}>
-                <img
-                  src="https://via.placeholder.com/600x400/667eea/ffffff?text=HomeFlip+Dashboard"
-                  alt="HomeFlip Dashboard"
-                  style={{ width: '100%', maxWidth: '500px', borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}
-                />
+            <Grid item xs={12} md={6}>
+              <Box
+                sx={{
+                  position: 'relative',
+                  height: 400,
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: 3,
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden'
+                }}
+              >
+                <Typography variant="h6" sx={{ opacity: 0.8 }}>
+                  Interactive Dashboard Preview
+                </Typography>
               </Box>
             </Grid>
           </Grid>
@@ -400,27 +372,38 @@ const LandingPage: React.FC = () => {
       </Box>
 
       {/* Features Section */}
-      <Box id="features" sx={{ py: 8, backgroundColor: 'grey.50' }}>
+      <Box id="features" sx={{ py: { xs: 8, md: 12 }, backgroundColor: 'background.default' }}>
         <Container maxWidth="lg">
-          <Typography variant="h3" component="h2" textAlign="center" gutterBottom fontWeight="bold">
-            Everything You Need to Succeed
-          </Typography>
-          <Typography variant="h6" textAlign="center" color="text.secondary" sx={{ mb: 6 }}>
-            Our comprehensive platform covers every aspect of house flipping
-          </Typography>
+          <Box textAlign="center" sx={{ mb: 8 }}>
+            <Typography variant="h3" component="h2" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
+              Everything You Need to Succeed
+            </Typography>
+            <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
+              Powerful tools designed specifically for real estate investors and property flippers
+            </Typography>
+          </Box>
           
           <Grid container spacing={4}>
             {features.map((feature, index) => (
-              <Grid xs={12} md={6} key={index}>
-                <Card sx={{ height: '100%', p: 3, '&:hover': { boxShadow: 4 } }}>
-                  <CardContent>
-                    <Box sx={{ mb: 2 }}>
+              <Grid item xs={12} md={6} lg={4} key={index}>
+                <Card 
+                  sx={{ 
+                    height: '100%',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-8px)',
+                      boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+                    }
+                  }}
+                >
+                  <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                    <Box sx={{ mb: 3 }}>
                       {feature.icon}
                     </Box>
-                    <Typography variant="h5" component="h3" gutterBottom fontWeight="bold">
+                    <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
                       {feature.title}
                     </Typography>
-                    <Typography variant="body1" color="text.secondary">
+                    <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6 }}>
                       {feature.description}
                     </Typography>
                   </CardContent>
@@ -431,368 +414,80 @@ const LandingPage: React.FC = () => {
         </Container>
       </Box>
 
-      {/* Services Breakdown */}
-      <Box sx={{ py: 8 }}>
+      {/* Stats Section */}
+      <Box sx={{ py: { xs: 6, md: 8 }, backgroundColor: 'primary.main', color: 'white' }}>
         <Container maxWidth="lg">
-          <Typography variant="h3" component="h2" textAlign="center" gutterBottom fontWeight="bold">
-            Our Services
-          </Typography>
-          <Typography variant="h6" textAlign="center" color="text.secondary" sx={{ mb: 6 }}>
-            Detailed breakdown of what we offer
-          </Typography>
-
-          <Grid container spacing={4}>
-            <Grid xs={12} md={4}>
-              <Paper sx={{ p: 3, height: '100%' }}>
-                <Typography variant="h5" gutterBottom fontWeight="bold" color="primary.main">
-                  Deal Analysis
+          <Grid container spacing={4} textAlign="center">
+            {stats.map((stat, index) => (
+              <Grid item xs={6} md={3} key={index}>
+                <Typography variant="h3" sx={{ fontWeight: 700, mb: 1 }}>
+                  {stat.number}
                 </Typography>
-                <List>
-                  <ListItem>
-                    <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                    <ListItemText primary="ROI Calculations" />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                    <ListItemText primary="Market Analysis" />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                    <ListItemText primary="Repair Cost Estimation" />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                    <ListItemText primary="Comparable Sales" />
-                  </ListItem>
-                </List>
-              </Paper>
-            </Grid>
-            
-            <Grid xs={12} md={4}>
-              <Paper sx={{ p: 3, height: '100%' }}>
-                <Typography variant="h5" gutterBottom fontWeight="bold" color="primary.main">
-                  Project Management
+                <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                  {stat.label}
                 </Typography>
-                <List>
-                  <ListItem>
-                    <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                    <ListItemText primary="Task Scheduling" />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                    <ListItemText primary="Contractor Management" />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                    <ListItemText primary="Progress Tracking" />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                    <ListItemText primary="Timeline Management" />
-                  </ListItem>
-                </List>
-              </Paper>
-            </Grid>
-            
-            <Grid xs={12} md={4}>
-              <Paper sx={{ p: 3, height: '100%' }}>
-                <Typography variant="h5" gutterBottom fontWeight="bold" color="primary.main">
-                  Financial Management
-                </Typography>
-                <List>
-                  <ListItem>
-                    <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                    <ListItemText primary="Expense Tracking" />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                    <ListItemText primary="Profit Analysis" />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                    <ListItemText primary="Tax Preparation" />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                    <ListItemText primary="Financial Reporting" />
-                  </ListItem>
-                </List>
-              </Paper>
-            </Grid>
-          </Grid>
-
-          {/* Rental Management Section - PRO Feature */}
-          <Box sx={{ mt: 6 }}>
-            <Typography variant="h4" component="h3" textAlign="center" gutterBottom fontWeight="bold" color="primary.main">
-              🏠 Rental Management (PRO Feature)
-            </Typography>
-            <Typography variant="h6" textAlign="center" color="text.secondary" sx={{ mb: 4 }}>
-              Complete rental property management system for long-term investors
-            </Typography>
-            
-            <Grid container spacing={4}>
-              <Grid xs={12} md={6}>
-                <Paper sx={{ p: 3, height: '100%', border: '2px solid', borderColor: 'primary.main' }}>
-                  <Typography variant="h5" gutterBottom fontWeight="bold" color="primary.main">
-                    Tenant Management
-                  </Typography>
-                  <List>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Tenant Database & Contact Info" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Lease Management & Renewals" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Move-in/Move-out Checklists" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Tenant Screening & Applications" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Rent Collection & Late Fee Tracking" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Emergency Contact Management" />
-                    </ListItem>
-                  </List>
-                </Paper>
-              </Grid>
-              
-              <Grid xs={12} md={6}>
-                <Paper sx={{ p: 3, height: '100%', border: '2px solid', borderColor: 'primary.main' }}>
-                  <Typography variant="h5" gutterBottom fontWeight="bold" color="primary.main">
-                    Rental Financials
-                  </Typography>
-                  <List>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Rental Income Tracking" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Operating Expense Management" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Capital Expenditure Tracking" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Cash Flow Analysis" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="APOD Reports (Annual Property Operating Data)" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Schedule E Tax Preparation" />
-                    </ListItem>
-                  </List>
-                </Paper>
-              </Grid>
-              
-              <Grid xs={12} md={6}>
-                <Paper sx={{ p: 3, height: '100%', border: '2px solid', borderColor: 'primary.main' }}>
-                  <Typography variant="h5" gutterBottom fontWeight="bold" color="primary.main">
-                    Property Maintenance
-                  </Typography>
-                  <List>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Maintenance Request Tracking" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Vendor Management & Scheduling" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Inspection Checklists" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Preventive Maintenance Scheduling" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Work Order Management" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Property Condition Reports" />
-                    </ListItem>
-                  </List>
-                </Paper>
-              </Grid>
-              
-              <Grid xs={12} md={6}>
-                <Paper sx={{ p: 3, height: '100%', border: '2px solid', borderColor: 'primary.main' }}>
-                  <Typography variant="h5" gutterBottom fontWeight="bold" color="primary.main">
-                    Legal & Documentation
-                  </Typography>
-                  <List>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Lease Agreement Templates" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Rental Applications & Screening" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Security Deposit Agreements" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Notice Templates (Rent Increase, Entry, etc.)" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Violation Letters & Documentation" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText primary="Legal Document Storage" />
-                    </ListItem>
-                  </List>
-                </Paper>
-              </Grid>
-            </Grid>
-          </Box>
-        </Container>
-      </Box>
-
-      {/* Pricing Section */}
-      <Box id="pricing" sx={{ py: 8, backgroundColor: 'grey.50' }}>
-        <Container maxWidth="lg">
-          <Typography variant="h3" component="h2" textAlign="center" gutterBottom fontWeight="bold">
-            Simple, Transparent Pricing
-          </Typography>
-          <Typography variant="h6" textAlign="center" color="text.secondary" sx={{ mb: 6 }}>
-            Start free, upgrade when you're ready
-          </Typography>
-
-          <Grid container spacing={4} justifyContent="center">
-            {pricingPlans.map((plan, index) => (
-              <Grid xs={12} md={6} lg={4} key={index}>
-                <Card 
-                  sx={{ 
-                    height: '100%', 
-                    position: 'relative',
-                    ...(plan.popular && {
-                      border: '2px solid',
-                      borderColor: 'primary.main',
-                      transform: 'scale(1.05)',
-                      zIndex: 1
-                    })
-                  }}
-                >
-                  {plan.popular && (
-                    <Chip
-                      label="Most Popular"
-                      color="primary"
-                      sx={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)' }}
-                    />
-                  )}
-                  <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h4" component="h3" gutterBottom fontWeight="bold">
-                      {plan.name}
-                    </Typography>
-                    <Typography variant="h2" component="div" gutterBottom color="primary.main">
-                      {plan.price}
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary" gutterBottom>
-                      {plan.period}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                      {plan.description}
-                    </Typography>
-                    <List>
-                      {plan.features.map((feature, featureIndex) => (
-                        <ListItem key={featureIndex} sx={{ py: 0.5 }}>
-                          <ListItemIcon>
-                            <CheckCircleIcon color="success" fontSize="small" />
-                          </ListItemIcon>
-                          <ListItemText primary={feature} />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </CardContent>
-                  <CardActions sx={{ p: 3, pt: 0 }}>
-                    <Button
-                      fullWidth
-                      variant={plan.buttonVariant}
-                      size="large"
-                      onClick={() => navigate('/register')}
-                    >
-                      {plan.buttonText}
-                    </Button>
-                  </CardActions>
-                </Card>
               </Grid>
             ))}
           </Grid>
         </Container>
       </Box>
 
-      {/* Rental Management Pricing Section */}
-      <Box sx={{ py: 8, backgroundColor: 'primary.50' }}>
+      {/* Pricing Section */}
+      <Box id="pricing" sx={{ py: { xs: 8, md: 12 } }}>
         <Container maxWidth="lg">
-          <Typography variant="h3" component="h2" textAlign="center" gutterBottom fontWeight="bold">
-            🏠 Rental Management Pricing
-          </Typography>
-          <Typography variant="h6" textAlign="center" color="text.secondary" sx={{ mb: 6 }}>
-            Dedicated rental property management for long-term investors
-          </Typography>
-
+          <Box textAlign="center" sx={{ mb: 8 }}>
+            <Typography variant="h3" component="h2" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
+              Simple, Transparent Pricing
+            </Typography>
+            <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
+              Choose the plan that fits your investment journey
+            </Typography>
+          </Box>
+          
           <Grid container spacing={4} justifyContent="center">
-            {rentalPlans.map((plan, index) => (
-              <Grid xs={12} md={6} key={index}>
+            {pricingPlans.map((plan, index) => (
+              <Grid item xs={12} md={6} lg={4} key={index}>
                 <Card 
                   sx={{ 
-                    height: '100%', 
+                    height: '100%',
                     position: 'relative',
-                    ...(plan.popular && {
-                      border: '2px solid',
-                      borderColor: 'primary.main',
-                      transform: 'scale(1.05)',
-                      zIndex: 1
-                    })
+                    border: plan.popular ? '2px solid' : '1px solid',
+                    borderColor: plan.popular ? 'primary.main' : 'divider',
+                    transform: plan.popular ? 'scale(1.05)' : 'scale(1)',
+                    transition: 'all 0.3s ease'
                   }}
                 >
                   {plan.popular && (
                     <Chip
                       label="Most Popular"
                       color="primary"
-                      sx={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)' }}
+                      sx={{ 
+                        position: 'absolute', 
+                        top: -12, 
+                        left: '50%', 
+                        transform: 'translateX(-50%)',
+                        fontWeight: 600
+                      }}
                     />
                   )}
-                  <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h4" component="h3" gutterBottom fontWeight="bold">
+                  <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                    <Typography variant="h4" component="h3" gutterBottom sx={{ fontWeight: 700, mb: 1 }}>
                       {plan.name}
                     </Typography>
-                    <Typography variant="h2" component="div" gutterBottom color="primary.main">
+                    <Typography variant="h2" sx={{ fontWeight: 700, mb: 1, color: 'primary.main' }}>
                       {plan.price}
                     </Typography>
-                    <Typography variant="body1" color="text.secondary" gutterBottom>
+                    <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                       {plan.period}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
                       {plan.description}
                     </Typography>
-                    <List>
+                    
+                    <List sx={{ mb: 4 }}>
                       {plan.features.map((feature, featureIndex) => (
-                        <ListItem key={featureIndex} sx={{ py: 0.5 }}>
-                          <ListItemIcon>
+                        <ListItem key={featureIndex} sx={{ py: 0.5, px: 0 }}>
+                          <ListItemIcon sx={{ minWidth: 32 }}>
                             <CheckCircleIcon color="success" fontSize="small" />
                           </ListItemIcon>
                           <ListItemText primary={feature} />
@@ -800,12 +495,12 @@ const LandingPage: React.FC = () => {
                       ))}
                     </List>
                   </CardContent>
-                  <CardActions sx={{ p: 3, pt: 0 }}>
+                  <CardActions sx={{ p: 4, pt: 0 }}>
                     <Button
-                      variant={plan.buttonVariant}
-                      color="primary"
-                      size="large"
                       fullWidth
+                      variant={plan.buttonVariant}
+                      size="large"
+                      onClick={() => navigate('/register')}
                       sx={{ py: 1.5 }}
                     >
                       {plan.buttonText}
@@ -818,31 +513,44 @@ const LandingPage: React.FC = () => {
         </Container>
       </Box>
 
-      {/* Testimonials */}
-      <Box sx={{ py: 8 }}>
+      {/* Testimonials Section */}
+      <Box sx={{ py: { xs: 8, md: 12 }, backgroundColor: 'background.default' }}>
         <Container maxWidth="lg">
-          <Typography variant="h3" component="h2" textAlign="center" gutterBottom fontWeight="bold">
-            What Our Users Say
-          </Typography>
+          <Box textAlign="center" sx={{ mb: 8 }}>
+            <Typography variant="h3" component="h2" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
+              Trusted by Real Estate Professionals
+            </Typography>
+            <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
+              See what our users are saying about their success
+            </Typography>
+          </Box>
+          
           <Grid container spacing={4}>
             {testimonials.map((testimonial, index) => (
-              <Grid xs={12} md={4} key={index}>
-                <Card sx={{ height: '100%', p: 3 }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', mb: 2 }}>
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <StarIcon key={i} color="warning" />
-                      ))}
+              <Grid item xs={12} md={4} key={index}>
+                <Card sx={{ height: '100%' }}>
+                  <CardContent sx={{ p: 4 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                      <Avatar sx={{ bgcolor: 'primary.main', mr: 2, width: 48, height: 48 }}>
+                        {testimonial.avatar}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                          {testimonial.name}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {testimonial.role}
+                        </Typography>
+                      </Box>
                     </Box>
-                    <Typography variant="body1" sx={{ mb: 2, fontStyle: 'italic' }}>
+                    <Typography variant="body1" sx={{ fontStyle: 'italic', lineHeight: 1.6 }}>
                       "{testimonial.content}"
                     </Typography>
-                    <Typography variant="subtitle1" fontWeight="bold">
-                      {testimonial.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {testimonial.role}
-                    </Typography>
+                    <Box sx={{ display: 'flex', mt: 2 }}>
+                      {[...Array(5)].map((_, i) => (
+                        <StarIcon key={i} sx={{ color: 'warning.main', fontSize: 20 }} />
+                      ))}
+                    </Box>
                   </CardContent>
                 </Card>
               </Grid>
@@ -851,207 +559,188 @@ const LandingPage: React.FC = () => {
         </Container>
       </Box>
 
-      {/* FAQ Section */}
-      <Box id="help" sx={{ py: 8, backgroundColor: 'grey.50' }}>
+      {/* CTA Section */}
+      <Box sx={{ py: { xs: 8, md: 12 }, backgroundColor: 'primary.main', color: 'white' }}>
         <Container maxWidth="md">
-          <Typography variant="h3" component="h2" textAlign="center" gutterBottom fontWeight="bold">
-            Frequently Asked Questions
-          </Typography>
-          <Typography variant="h6" textAlign="center" color="text.secondary" sx={{ mb: 6 }}>
-            Everything you need to know about HomeFlip
-          </Typography>
-
-          {faqs.map((faq, index) => (
-            <Accordion key={index} sx={{ mb: 1 }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="h6" fontWeight="bold">
-                  {faq.question}
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Typography variant="body1">
-                  {faq.answer}
-                </Typography>
-              </AccordionDetails>
-            </Accordion>
-          ))}
-        </Container>
-      </Box>
-
-      {/* Contact Section */}
-      <Box sx={{ py: 8 }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={6} alignItems="center">
-            <Grid xs={12} md={6}>
-              <Typography variant="h3" component="h2" gutterBottom fontWeight="bold">
-                Get in Touch
-              </Typography>
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                Have questions? We're here to help!
-              </Typography>
-              <Box sx={{ mt: 4 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <EmailIcon color="primary" sx={{ mr: 2 }} />
-                  <Typography>support@homeflip.com</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <PhoneIcon color="primary" sx={{ mr: 2 }} />
-                  <Typography>1-800-HOMEFLIP</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <SupportIcon color="primary" sx={{ mr: 2 }} />
-                  <Typography>Live chat available 24/7</Typography>
-                </Box>
-              </Box>
-            </Grid>
-            <Grid xs={12} md={6}>
-              <Card>
-                <CardContent sx={{ p: 4 }}>
-                  <Typography variant="h5" gutterBottom fontWeight="bold">
-                    Send us a message
-                  </Typography>
-                  <form onSubmit={handleContactSubmit}>
-                    <TextField
-                      fullWidth
-                      label="Your Name"
-                      name="name"
-                      value={contactForm.name}
-                      onChange={handleContactChange}
-                      margin="normal"
-                      required
-                    />
-                    <TextField
-                      fullWidth
-                      label="Email Address"
-                      name="email"
-                      type="email"
-                      value={contactForm.email}
-                      onChange={handleContactChange}
-                      margin="normal"
-                      required
-                    />
-                    <TextField
-                      fullWidth
-                      label="Message"
-                      name="message"
-                      multiline
-                      rows={4}
-                      value={contactForm.message}
-                      onChange={handleContactChange}
-                      margin="normal"
-                      required
-                    />
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      fullWidth
-                      size="large"
-                      sx={{ mt: 2 }}
-                    >
-                      Send Message
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
+          <Box textAlign="center">
+            <Typography variant="h3" component="h2" gutterBottom sx={{ fontWeight: 700, mb: 3 }}>
+              Ready to Transform Your Real Estate Business?
+            </Typography>
+            <Typography variant="h6" sx={{ mb: 4, opacity: 0.9 }}>
+              Join thousands of successful investors who trust HomeFlip Pro
+            </Typography>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
+              <Button
+                variant="contained"
+                size="large"
+                onClick={() => navigate('/register')}
+                sx={{ 
+                  py: 2, 
+                  px: 4,
+                  backgroundColor: 'white',
+                  color: 'primary.main',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  }
+                }}
+                endIcon={<ArrowForwardIcon />}
+              >
+                Start Your Free Trial
+              </Button>
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={() => setContactOpen(true)}
+                sx={{ 
+                  py: 2, 
+                  px: 4,
+                  borderColor: 'white',
+                  color: 'white',
+                  '&:hover': {
+                    borderColor: 'white',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  }
+                }}
+              >
+                Contact Sales
+              </Button>
+            </Stack>
+          </Box>
         </Container>
       </Box>
 
       {/* Footer */}
-      <Box sx={{ py: 4, backgroundColor: 'primary.main', color: 'white' }}>
+      <Box component="footer" sx={{ py: 6, backgroundColor: 'background.paper', borderTop: '1px solid', borderColor: 'divider' }}>
         <Container maxWidth="lg">
           <Grid container spacing={4}>
-            <Grid xs={12} md={4}>
-              <Typography variant="h5" fontWeight="bold" gutterBottom>
-                HomeFlip
+            <Grid item xs={12} md={4}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: 'primary.main' }}>
+                HomeFlip Pro
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                The complete house flipping software for serious real estate investors.
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                The complete platform for real estate investors and property flippers.
               </Typography>
+              <Stack direction="row" spacing={1}>
+                <IconButton size="small">
+                  <EmailIcon />
+                </IconButton>
+                <IconButton size="small">
+                  <PhoneIcon />
+                </IconButton>
+              </Stack>
             </Grid>
-            <Grid xs={12} md={4}>
-              <Typography variant="h6" gutterBottom>
-                Quick Links
+            <Grid item xs={12} md={2}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                Product
               </Typography>
               <List dense>
                 <ListItem sx={{ py: 0 }}>
-                  <Button color="inherit" onClick={() => navigate('/login')}>
-                    Login
-                  </Button>
+                  <ListItemText primary="Features" />
                 </ListItem>
                 <ListItem sx={{ py: 0 }}>
-                  <Button color="inherit" onClick={() => navigate('/register')}>
-                    Sign Up
-                  </Button>
+                  <ListItemText primary="Pricing" />
                 </ListItem>
                 <ListItem sx={{ py: 0 }}>
-                  <Button color="inherit" onClick={() => document.getElementById('help')?.scrollIntoView()}>
-                    Help
-                  </Button>
+                  <ListItemText primary="API" />
                 </ListItem>
               </List>
             </Grid>
-            <Grid xs={12} md={4}>
-              <Typography variant="h6" gutterBottom>
-                Contact
+            <Grid item xs={12} md={2}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                Support
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                Email: support@homeflip.com<br />
-                Phone: 1-800-HOMEFLIP
+              <List dense>
+                <ListItem sx={{ py: 0 }}>
+                  <ListItemText primary="Help Center" />
+                </ListItem>
+                <ListItem sx={{ py: 0 }}>
+                  <ListItemText primary="Contact" />
+                </ListItem>
+                <ListItem sx={{ py: 0 }}>
+                  <ListItemText primary="Status" />
+                </ListItem>
+              </List>
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                Company
               </Typography>
+              <List dense>
+                <ListItem sx={{ py: 0 }}>
+                  <ListItemText primary="About" />
+                </ListItem>
+                <ListItem sx={{ py: 0 }}>
+                  <ListItemText primary="Blog" />
+                </ListItem>
+                <ListItem sx={{ py: 0 }}>
+                  <ListItemText primary="Careers" />
+                </ListItem>
+              </List>
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                Legal
+              </Typography>
+              <List dense>
+                <ListItem sx={{ py: 0 }}>
+                  <ListItemText primary="Privacy" />
+                </ListItem>
+                <ListItem sx={{ py: 0 }}>
+                  <ListItemText primary="Terms" />
+                </ListItem>
+                <ListItem sx={{ py: 0 }}>
+                  <ListItemText primary="Security" />
+                </ListItem>
+              </List>
             </Grid>
           </Grid>
-          <Divider sx={{ my: 2, borderColor: 'rgba(255,255,255,0.2)' }} />
-          <Typography variant="body2" textAlign="center" sx={{ opacity: 0.8 }}>
-            © 2024 HomeFlip. All rights reserved.
-          </Typography>
+          <Divider sx={{ my: 4 }} />
+          <Box textAlign="center">
+            <Typography variant="body2" color="text.secondary">
+              © 2024 HomeFlip Pro. All rights reserved.
+            </Typography>
+          </Box>
         </Container>
       </Box>
 
       {/* Contact Dialog */}
       <Dialog open={contactOpen} onClose={() => setContactOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Contact Us</DialogTitle>
-        <DialogContent>
-          <form onSubmit={handleContactSubmit}>
+        <DialogTitle>Get in Touch</DialogTitle>
+        <form onSubmit={handleContactSubmit}>
+          <DialogContent>
             <TextField
               fullWidth
-              label="Your Name"
-              name="name"
+              label="Name"
               value={contactForm.name}
-              onChange={handleContactChange}
+              onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
               margin="normal"
               required
             />
             <TextField
               fullWidth
-              label="Email Address"
-              name="email"
+              label="Email"
               type="email"
               value={contactForm.email}
-              onChange={handleContactChange}
+              onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
               margin="normal"
               required
             />
             <TextField
               fullWidth
               label="Message"
-              name="message"
               multiline
               rows={4}
               value={contactForm.message}
-              onChange={handleContactChange}
+              onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
               margin="normal"
               required
             />
-          </form>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setContactOpen(false)}>Cancel</Button>
-          <Button onClick={handleContactSubmit} variant="contained">
-            Send
-          </Button>
-        </DialogActions>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setContactOpen(false)}>Cancel</Button>
+            <Button type="submit" variant="contained">Send Message</Button>
+          </DialogActions>
+        </form>
       </Dialog>
 
       {/* Snackbar */}
@@ -1061,7 +750,7 @@ const LandingPage: React.FC = () => {
         onClose={() => setSnackbarOpen(false)}
       >
         <Alert onClose={() => setSnackbarOpen(false)} severity="success">
-          Message sent successfully! We'll get back to you soon.
+          Thank you for your message! We'll get back to you soon.
         </Alert>
       </Snackbar>
     </Box>
