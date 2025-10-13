@@ -26,6 +26,7 @@ import {
   TableHead,
   TableRow
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -136,6 +137,14 @@ const Deals: React.FC = () => {
       ...prev,
       [name]: name.includes('Price') || name.includes('Costs') || name.includes('ARV') 
               ? Number(value) : value
+    }));
+  };
+
+  const handleSelectChange = (e: SelectChangeEvent<string>) => {
+    const { name, value } = e.target as { name: string; value: string };
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
     }));
   };
 

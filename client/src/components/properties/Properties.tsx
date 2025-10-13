@@ -28,6 +28,7 @@ import {
   Home as HomeIcon
 } from '@mui/icons-material';
 import { useProperties } from '../../contexts/PropertyContext';
+import type { SelectChangeEvent } from '@mui/material/Select';
 
 interface PropertyFormData {
   address: {
@@ -122,6 +123,14 @@ const Properties: React.FC = () => {
                 ? Number(value) : value
       }));
     }
+  };
+
+  const handleSelectChange = (e: SelectChangeEvent<string>) => {
+    const { name, value } = e.target as { name: string; value: string };
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

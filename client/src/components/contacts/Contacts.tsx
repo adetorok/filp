@@ -26,6 +26,7 @@ import {
   Chip,
   Rating
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import { Grid } from '@mui/material';
 import {
   Add as AddIcon,
@@ -213,8 +214,8 @@ const Contacts: React.FC = () => {
     }
   };
 
-  const handleSelectChange = (e: any) => {
-    const { name, value } = e.target;
+  const handleSelectChange = (e: SelectChangeEvent<string>) => {
+    const { name, value } = e.target as { name: string; value: string };
     setFormData(prev => ({
       ...prev,
       [name]: value
