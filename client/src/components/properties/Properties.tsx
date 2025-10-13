@@ -320,7 +320,7 @@ const Properties: React.FC = () => {
                   <Select
                     name="propertyType"
                     value={formData.propertyType}
-                    onChange={handleChange}
+                    onChange={handleSelectChange}
                   >
                     <MenuItem value="Single Family">Single Family</MenuItem>
                     <MenuItem value="Condo">Condo</MenuItem>
@@ -336,7 +336,7 @@ const Properties: React.FC = () => {
                   <Select
                     name="status"
                     value={formData.status}
-                    onChange={handleChange}
+                    onChange={handleSelectChange}
                   >
                     <MenuItem value="Analyzing">Analyzing</MenuItem>
                     <MenuItem value="Under Contract">Under Contract</MenuItem>
