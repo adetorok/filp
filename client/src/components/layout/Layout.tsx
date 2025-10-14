@@ -19,7 +19,8 @@ import {
   Badge,
   Chip,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  alpha,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -32,14 +33,15 @@ import {
   Assessment as AssessmentIcon,
   AccountCircle as AccountCircleIcon,
   Logout as LogoutIcon,
-  AccountBalance as AccountBalanceIcon,
-  Help as HelpIcon,
-  Business as BusinessIcon,
   Notifications as NotificationsIcon,
   Settings as SettingsIcon,
   CreditCard as CreditCardIcon,
+  Construction as ConstructionIcon,
+  Business as BusinessIcon,
   People as PeopleIcon,
-  Construction as ConstructionIcon
+  HomeWork as HomeWorkIcon,
+  AttachMoney as AttachMoneyIcon,
+  Timeline as TimelineIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -81,82 +83,90 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       text: 'Dashboard',
       icon: <DashboardIcon />,
       path: '/dashboard',
-      badge: null
+      badge: null,
     },
     {
       text: 'Properties',
       icon: <HomeIcon />,
       path: '/properties',
-      badge: null
+      badge: null,
     },
     {
       text: 'Deals',
       icon: <TrendingUpIcon />,
       path: '/deals',
-      badge: '3'
+      badge: '3',
     },
     {
       text: 'Expenses',
       icon: <ReceiptIcon />,
       path: '/expenses',
-      badge: null
+      badge: null,
     },
     {
       text: 'Tasks',
       icon: <AssignmentIcon />,
       path: '/tasks',
-      badge: '5'
+      badge: '5',
     },
     {
       text: 'Contacts',
       icon: <ContactsIcon />,
       path: '/contacts',
-      badge: null
+      badge: null,
     },
     {
       text: 'Contractors',
       icon: <ConstructionIcon />,
       path: '/contractors',
-      badge: null
+      badge: null,
     },
     {
       text: 'Reports',
       icon: <AssessmentIcon />,
       path: '/reports',
-      badge: null
+      badge: null,
     },
     {
       text: 'Subscription',
       icon: <CreditCardIcon />,
       path: '/subscription',
-      badge: null
-    }
+      badge: null,
+    },
   ];
 
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Logo Section */}
-      <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider' }}>
+      <Box
+        sx={{
+          p: 3,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <Box
             sx={{
-              width: 40,
-              height: 40,
+              width: 48,
+              height: 48,
               borderRadius: 2,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'rgba(255, 255, 255, 0.2)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              mr: 2
+              mr: 2,
             }}
           >
-            <HomeIcon sx={{ color: 'white', fontSize: 24 }} />
+            <HomeIcon sx={{ color: 'white', fontSize: 28 }} />
           </Box>
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: 'white' }}>
               HomeFlip Pro
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
               Real Estate Platform
             </Typography>
           </Box>
@@ -178,15 +188,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   sx={{
                     borderRadius: 2,
                     mb: 0.5,
-                    backgroundColor: isActive ? 'primary.main' : 'transparent',
-                    color: isActive ? 'white' : 'text.primary',
+                    backgroundColor: isActive ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+                    color: isActive ? theme.palette.primary.main : 'text.primary',
+                    border: isActive ? `1px solid ${alpha(theme.palette.primary.main, 0.2)}` : 'none',
                     '&:hover': {
-                      backgroundColor: isActive ? 'primary.dark' : 'action.hover',
+                      backgroundColor: isActive 
+                        ? alpha(theme.palette.primary.main, 0.15) 
+                        : alpha(theme.palette.primary.main, 0.05),
                     },
                     transition: 'all 0.2s ease-in-out',
                   }}
                 >
-                  <ListItemIcon sx={{ color: isActive ? 'white' : 'text.secondary', minWidth: 40 }}>
+                  <ListItemIcon 
+                    sx={{ 
+                      color: isActive ? theme.palette.primary.main : 'text.secondary',
+                      minWidth: 40,
+                    }}
+                  >
                     {item.badge ? (
                       <Badge badgeContent={item.badge} color="error" variant="dot">
                         {item.icon}
@@ -214,14 +232,38 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* User Section */}
       <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Avatar sx={{ width: 40, height: 40, mr: 2, bgcolor: 'primary.main' }}>
+          <Avatar 
+            sx={{ 
+              width: 44, 
+              height: 44, 
+              mr: 2, 
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              fontWeight: 600,
+            }}
+          >
             {user?.name?.charAt(0) || 'U'}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                fontWeight: 600, 
+                overflow: 'hidden', 
+                textOverflow: 'ellipsis', 
+                whiteSpace: 'nowrap' 
+              }}
+            >
               {user?.name || 'User'}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <Typography 
+              variant="caption" 
+              color="text.secondary" 
+              sx={{ 
+                overflow: 'hidden', 
+                textOverflow: 'ellipsis', 
+                whiteSpace: 'nowrap' 
+              }}
+            >
               {user?.email || 'user@example.com'}
             </Typography>
           </Box>
@@ -231,7 +273,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           size="small"
           color="primary"
           variant="outlined"
-          sx={{ fontSize: '0.75rem' }}
+          sx={{ 
+            fontSize: '0.75rem',
+            fontWeight: 600,
+          }}
         />
       </Box>
     </Box>
@@ -247,11 +292,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         sx={{
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
-          backgroundColor: 'background.paper',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
           color: 'text.primary',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
           borderBottom: '1px solid',
-          borderColor: 'divider'
+          borderColor: 'divider',
+          backdropFilter: 'blur(20px)',
         }}
       >
         <Toolbar>
@@ -289,7 +335,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               onClick={handleProfileMenuOpen}
               color="inherit"
             >
-              <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+              <Avatar 
+                sx={{ 
+                  width: 36, 
+                  height: 36, 
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  fontWeight: 600,
+                }}
+              >
                 {user?.name?.charAt(0) || 'U'}
               </Avatar>
             </IconButton>
@@ -315,8 +368,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           sx: {
             mt: 1,
             minWidth: 200,
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-            borderRadius: 2
+            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.12)',
+            borderRadius: 2,
+            border: '1px solid rgba(0, 0, 0, 0.05)',
           }
         }}
       >
@@ -331,12 +385,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <CreditCardIcon fontSize="small" />
           </ListItemIcon>
           Subscription
-        </MenuItem>
-        <MenuItem onClick={() => { navigate('/help'); handleProfileMenuClose(); }}>
-          <ListItemIcon>
-            <HelpIcon fontSize="small" />
-          </ListItemIcon>
-          Help & Support
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleLogout}>

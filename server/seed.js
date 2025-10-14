@@ -9,11 +9,9 @@
  * - Sample data for all features
  */
 
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('./prisma');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-
-const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Starting database seed...');

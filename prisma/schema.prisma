@@ -1,4 +1,3 @@
-// This is a clean, working schema for production
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,84 +8,80 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  company   String?
-  phone     String?
-  role      Role     @default(USER)
-  isActive  Boolean  @default(true)
-  lastLoginAt  DateTime?
-  passwordResetToken String?
+  id                   String             @id @default(cuid())
+  name                 String
+  email                String             @unique
+  password             String
+  company              String?
+  phone                String?
+  role                 Role               @default(USER)
+  isActive             Boolean            @default(true)
+  lastLoginAt          DateTime?
+  passwordResetToken   String?
   passwordResetExpires DateTime?
-  twoFactorSecret String?
-  twoFactorEnabled Boolean @default(false)
-  timezone     String   @default("UTC")
-  language     String   @default("en")
-  deletedAt    DateTime? // Soft delete
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  properties     Property[]
-  deals          Deal[]
-  expenses       Expense[]
-  tasks          Task[]
-  contacts       Contact[]
-  subscription   Subscription?
-  rentalProperties RentalProperty[]
-  tenants        Tenant[]
-  rentalIncome   RentalIncome[]
-  rentalExpenses RentalExpense[]
-  rentalTasks    RentalTask[]
-  contractorReviews ContractorReview[]
-  auditLogs     AuditLog[]
+  twoFactorSecret      String?
+  twoFactorEnabled     Boolean            @default(false)
+  timezone             String             @default("UTC")
+  language             String             @default("en")
+  deletedAt            DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  auditLogs            AuditLog[]
+  contacts             Contact[]
+  contractorReviews    ContractorReview[]
+  deals                Deal[]
+  expenses             Expense[]
+  properties           Property[]
+  rentalExpenses       RentalExpense[]
+  rentalIncome         RentalIncome[]
+  rentalProperties     RentalProperty[]
+  rentalTasks          RentalTask[]
+  subscription         Subscription?
+  tasks                Task[]
+  tenants              Tenant[]
 
   @@map("users")
 }
 
 model Property {
-  id                   String      @id @default(cuid())
+  id                   String           @id @default(cuid())
   userId               String
   street               String
   city                 String
   state                String
   zipCode              String
   fullAddress          String
-  propertyType         PropertyType @default(SINGLE_FAMILY)
+  propertyType         PropertyType     @default(SINGLE_FAMILY)
   bedrooms             Int?
   bathrooms            Int?
   squareFeet           Int?
   lotSize              Float?
   yearBuilt            Int?
-  condition            Condition   @default(FAIR)
+  condition            Condition        @default(FAIR)
   purchasePrice        Float?
   estimatedRepairCosts Float?
   estimatedARV         Float?
   estimatedProfit      Float?
   estimatedROI         Float?
   estimatedTimeline    Int?
-  status               PropertyStatus @default(ANALYZING)
+  status               PropertyStatus   @default(ANALYZING)
   notes                String?
   images               String[]
   documents            String[]
-  deletedAt            DateTime?   // Soft delete
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-
-  // Relations
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deals           Deal[]
-  expenses        Expense[]
-  tasks           Task[]
-  rentalProperties RentalProperty[]
+  deletedAt            DateTime?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  deals                Deal[]
+  expenses             Expense[]
+  user                 User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rentalProperties     RentalProperty[]
+  tasks                Task[]
 
   @@map("properties")
 }
 
 model Deal {
-  id                String      @id @default(cuid())
+  id                String        @id @default(cuid())
   userId            String
   propertyId        String
   dealName          String?
@@ -101,74 +96,66 @@ model Deal {
   estimatedProfit   Float?
   estimatedROI      Float?
   estimatedTimeline Int?
-  status            DealStatus  @default(ANALYZING)
+  status            DealStatus    @default(ANALYZING)
   notes             String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  // Financing
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
   financingType     FinancingType @default(CASH)
   downPayment       Float?
   interestRate      Float?
   loanTerm          Int?
   monthlyPayment    Float?
-
-  // Relations
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  expenses Expense[]
-  tasks    Task[]
+  property          Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses          Expense[]
+  tasks             Task[]
 
   @@map("deals")
 }
 
 model Expense {
-  id            String        @id @default(cuid())
-  userId        String
-  propertyId    String
-  dealId        String?
-  category      ExpenseCategory
-  subcategory   String?
-  description   String
-  amount        Float
-  vendor        String?
-  paymentMethod PaymentMethod @default(CASH)
-  date          DateTime      @default(now())
-  receipt       String?
-  notes         String?
-  isReimbursable Boolean      @default(false)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  // Relations
-  user     User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  deal     Deal?  @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  id             String          @id @default(cuid())
+  userId         String
+  propertyId     String
+  dealId         String?
+  category       ExpenseCategory
+  subcategory    String?
+  description    String
+  amount         Float
+  vendor         String?
+  paymentMethod  PaymentMethod   @default(CASH)
+  date           DateTime        @default(now())
+  receipt        String?
+  notes          String?
+  isReimbursable Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deal           Deal?           @relation(fields: [dealId], references: [id])
+  property       Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("expenses")
 }
 
 model Task {
-  id            String     @id @default(cuid())
-  userId        String
-  propertyId    String
-  dealId        String?
-  title         String
-  description   String
-  priority      Priority   @default(MEDIUM)
-  status        TaskStatus @default(PENDING)
-  dueDate       DateTime?
-  completedAt   DateTime?
+  id             String     @id @default(cuid())
+  userId         String
+  propertyId     String
+  dealId         String?
+  title          String
+  description    String
+  priority       Priority   @default(MEDIUM)
+  status         TaskStatus @default(PENDING)
+  dueDate        DateTime?
+  completedAt    DateTime?
   estimatedHours Int?
-  actualHours   Int?
-  notes         String?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-
-  // Relations
-  user     User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  deal     Deal?  @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  actualHours    Int?
+  notes          String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  deal           Deal?      @relation(fields: [dealId], references: [id])
+  property       Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("tasks")
 }
@@ -176,168 +163,150 @@ model Task {
 model Contact {
   id          String   @id @default(cuid())
   userId      String
-  type        String   // Contractor, Vendor, Customer, etc.
+  type        String
   name        String
   company     String?
   email       String?
   phone       String?
-  address     Json?    // { street, city, state, zipCode }
-  specialties String[] // Array of specialties
-  rating      Int?     // 1-5 rating
+  address     Json?
+  specialties String[]
+  rating      Int?
   notes       String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("contacts")
 }
 
 model Subscription {
-  id          String           @id @default(cuid())
-  userId      String           @unique
-  plan        SubscriptionPlan @default(FREE)
-  status      SubscriptionStatus @default(ACTIVE)
-  startDate   DateTime         @default(now())
-  endDate     DateTime?
-  price       Float?
-  billingCycle BillingCycle    @default(MONTHLY)
-  autoRenew   Boolean          @default(false)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String             @id @default(cuid())
+  userId       String             @unique
+  plan         SubscriptionPlan   @default(FREE)
+  status       SubscriptionStatus @default(ACTIVE)
+  startDate    DateTime           @default(now())
+  endDate      DateTime?
+  price        Float?
+  billingCycle BillingCycle       @default(MONTHLY)
+  autoRenew    Boolean            @default(false)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("subscriptions")
 }
 
-// Rental Management Models
 model RentalProperty {
-  id              String       @id @default(cuid())
-  userId          String
-  propertyId      String
-  monthlyRent     Float
-  deposit         Float?
-  leaseStartDate  DateTime
-  leaseEndDate    DateTime?
-  status          RentalStatus @default(VACANT)
-  notes           String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-
-  // Relations
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  tenants  Tenant[]
-  income   RentalIncome[]
-  expenses RentalExpense[]
-  tasks    RentalTask[]
+  id             String          @id @default(cuid())
+  userId         String
+  propertyId     String
+  monthlyRent    Float
+  deposit        Float?
+  leaseStartDate DateTime
+  leaseEndDate   DateTime?
+  status         RentalStatus    @default(VACANT)
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  expenses       RentalExpense[]
+  income         RentalIncome[]
+  property       Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks          RentalTask[]
+  tenants        Tenant[]
 
   @@map("rental_properties")
 }
 
 model Tenant {
-  id              String       @id @default(cuid())
-  userId          String
+  id               String         @id @default(cuid())
+  userId           String
   rentalPropertyId String
-  name            String
-  email           String?
-  phone           String?
-  emergencyContact Json?       // { name, phone, relationship }
-  moveInDate      DateTime
-  moveOutDate     DateTime?
-  status          TenantStatus @default(ACTIVE)
-  notes           String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-
-  // Relations
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  rentalProperty RentalProperty @relation(fields: [rentalPropertyId], references: [id], onDelete: Cascade)
-  rentalIncome  RentalIncome[]
+  name             String
+  email            String?
+  phone            String?
+  emergencyContact Json?
+  moveInDate       DateTime
+  moveOutDate      DateTime?
+  status           TenantStatus   @default(ACTIVE)
+  notes            String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  rentalIncome     RentalIncome[]
+  rentalProperty   RentalProperty @relation(fields: [rentalPropertyId], references: [id], onDelete: Cascade)
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("tenants")
 }
 
 model RentalIncome {
-  id              String         @id @default(cuid())
-  userId          String
+  id               String         @id @default(cuid())
+  userId           String
   rentalPropertyId String
-  tenantId        String?
-  amount          Float
-  category        IncomeCategory
-  description     String?
-  receivedDate    DateTime       @default(now())
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-
-  // Relations
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  rentalProperty RentalProperty @relation(fields: [rentalPropertyId], references: [id], onDelete: Cascade)
-  tenant        Tenant?       @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  tenantId         String?
+  amount           Float
+  category         IncomeCategory
+  description      String?
+  receivedDate     DateTime       @default(now())
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  rentalProperty   RentalProperty @relation(fields: [rentalPropertyId], references: [id], onDelete: Cascade)
+  tenant           Tenant?        @relation(fields: [tenantId], references: [id])
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("rental_income")
 }
 
 model RentalExpense {
-  id              String              @id @default(cuid())
-  userId          String
+  id               String                @id @default(cuid())
+  userId           String
   rentalPropertyId String
-  amount          Float
-  category        RentalExpenseCategory
-  description     String
-  vendor          String?
-  date            DateTime            @default(now())
-  receipt         String?
-  notes           String?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-
-  // Relations
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  rentalProperty RentalProperty @relation(fields: [rentalPropertyId], references: [id], onDelete: Cascade)
+  amount           Float
+  category         RentalExpenseCategory
+  description      String
+  vendor           String?
+  date             DateTime              @default(now())
+  receipt          String?
+  notes            String?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  rentalProperty   RentalProperty        @relation(fields: [rentalPropertyId], references: [id], onDelete: Cascade)
+  user             User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("rental_expenses")
 }
 
 model RentalTask {
-  id              String            @id @default(cuid())
-  userId          String
+  id               String             @id @default(cuid())
+  userId           String
   rentalPropertyId String
-  title           String
-  description     String
-  priority        Priority          @default(MEDIUM)
-  status          RentalTaskCategory @default(MAINTENANCE)
-  dueDate         DateTime?
-  completedDate   DateTime?
-  assignedTo      String?           // Contractor or vendor
-  cost            Float?
-  notes           String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-
-  // Relations
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  rentalProperty RentalProperty @relation(fields: [rentalPropertyId], references: [id], onDelete: Cascade)
+  title            String
+  description      String
+  priority         Priority           @default(MEDIUM)
+  status           RentalTaskCategory @default(MAINTENANCE)
+  dueDate          DateTime?
+  completedDate    DateTime?
+  assignedTo       String?
+  cost             Float?
+  notes            String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  rentalProperty   RentalProperty     @relation(fields: [rentalPropertyId], references: [id], onDelete: Cascade)
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("rental_tasks")
 }
 
-// Contractor Verification Models
 model Area {
-  id        String   @id @default(cuid())
-  type      AreaType
-  name      String
-  state     String
-  code      String   // ZIP code or county code
-  population Int?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
+  id          String                @id @default(cuid())
+  type        AreaType
+  name        String
+  state       String
+  code        String
+  population  Int?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
   contractors ContractorAreaScore[]
   projects    Project[]
 
@@ -345,78 +314,71 @@ model Area {
 }
 
 model Contractor {
-  id            String   @id @default(cuid())
-  name          String
-  companyName   String?
-  phone         String?
-  email         String?
-  website       String?
-  address1      String?
-  address2      String?
-  city          String?
-  state         String?
-  zip           String?
-  trades        Trade[]
-  // Experience tracking
-  yearsInBusiness Int?     // Years of service
-  totalProjects   Int      @default(0) // Total projects completed
-  totalValue      Decimal? // Total value of projects completed
-  businessStartDate DateTime? // When they started business
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  // Relations
-  licenses      ContractorLicense[]
-  contacts      ContractorContact[]
-  policies      InsurancePolicy[]
-  legalEvents   LegalEvent[]
-  projects      Project[]
-  reviews       ContractorReview[]
-  areaScores    ContractorAreaScore[]
-  portal        ContractorPortal?
-  challenges    RankingChallenge[]
-  membership    ContractorMembership?
-  permits       Permit[]
-  workSpecializations ContractorWorkSpecialization[]
+  id                          String                         @id @default(cuid())
+  name                        String
+  companyName                 String?
+  phone                       String?
+  email                       String?
+  website                     String?
+  address1                    String?
+  address2                    String?
+  city                        String?
+  state                       String?
+  zip                         String?
+  trades                      Trade[]
+  yearsInBusiness             Int?
+  totalProjects               Int                            @default(0)
+  totalValue                  Decimal?
+  businessStartDate           DateTime?
+  createdAt                   DateTime                       @default(now())
+  updatedAt                   DateTime                       @updatedAt
+  areaScores                  ContractorAreaScore[]
+  contacts                    ContractorContact[]
+  licenses                    ContractorLicense[]
+  membership                  ContractorMembership?
+  portal                      ContractorPortal?
+  reviews                     ContractorReview[]
+  workSpecializations         ContractorWorkSpecialization[]
   insurancePermitCorrelations InsurancePermitCorrelation[]
-  
+  policies                    InsurancePolicy[]
+  legalEvents                 LegalEvent[]
+  permits                     Permit[]
+  projects                    Project[]
+  challenges                  RankingChallenge[]
+
   @@map("contractors")
 }
 
 model ContractorContact {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   contractorId String
   name         String
   email        String?
   phone        String?
-  role         String?  // Primary contact, billing, etc.
-  isPrimary    Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Relations
-  contractor Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  role         String?
+  isPrimary    Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  contractor   Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
 
   @@map("contractor_contacts")
 }
 
 model ContractorLicense {
-  id            String       @id @default(cuid())
+  id            String        @id @default(cuid())
   contractorId  String
   number        String
   state         String
-  boardName     String?      // e.g., "Texas Department of Licensing and Regulation"
+  boardName     String?
   status        LicenseStatus @default(ACTIVE)
-  adminVerified Boolean      @default(false)
+  adminVerified Boolean       @default(false)
   verifiedAt    DateTime?
   expiresOn     DateTime?
-  sourceUrl     String?      // Link to verify online
+  sourceUrl     String?
   lastCheckedAt DateTime?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-
-  // Relations
-  contractor Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  contractor    Contractor    @relation(fields: [contractorId], references: [id], onDelete: Cascade)
 
   @@unique([contractorId, number, state])
   @@index([state, number])
@@ -424,22 +386,22 @@ model ContractorLicense {
 }
 
 model InsurancePolicy {
-  id             String   @id @default(cuid())
-  contractorId   String
-  type           InsuranceType
-  insurerName    String
-  policyNumber   String?
-  coverageEachOccur Decimal? // e.g., $2,000,000
-  coverageAggregate Decimal? // e.g., $4,000,000
-  expiresOn      DateTime?
-  brokerName     String?
-  brokerEmail    String?
-  brokerPhone    String?
-  certificateUrl String?  // uploaded COI or broker link
-  lastVerifiedAt DateTime?
-  contractor     Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  id                          String                       @id @default(cuid())
+  contractorId                String
+  type                        InsuranceType
+  insurerName                 String
+  policyNumber                String?
+  coverageEachOccur           Decimal?
+  coverageAggregate           Decimal?
+  expiresOn                   DateTime?
+  brokerName                  String?
+  brokerEmail                 String?
+  brokerPhone                 String?
+  certificateUrl              String?
+  lastVerifiedAt              DateTime?
   insurancePermitCorrelations InsurancePermitCorrelation[]
-  
+  contractor                  Contractor                   @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+
   @@unique([contractorId, policyNumber, type])
   @@index([expiresOn])
   @@index([contractorId, type])
@@ -447,69 +409,65 @@ model InsurancePolicy {
 }
 
 model LegalEvent {
-  id          String      @id @default(cuid())
+  id           String        @id @default(cuid())
   contractorId String
-  type        LegalType
-  severity    LegalSeverity
-  title       String
-  description String?
-  filedOn     DateTime?
-  resolvedOn  DateTime?
-  sourceUrl   String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  // Relations
-  contractor Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  type         LegalType
+  severity     LegalSeverity
+  title        String
+  description  String?
+  filedOn      DateTime?
+  resolvedOn   DateTime?
+  sourceUrl    String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  contractor   Contractor    @relation(fields: [contractorId], references: [id], onDelete: Cascade)
 
   @@map("legal_events")
 }
 
 model Project {
-  id              String   @id @default(cuid())
-  contractorId    String
-  areaId          String
-  trade           Trade
-  status          ProjectStatus @default(PLANNED)
-  plannedStart    DateTime?
-  plannedEnd      DateTime?
-  actualStart     DateTime?
-  actualEnd       DateTime?
-  budgetPlanned   Decimal?
-  budgetActual    Decimal?
-  warrantyMonths  Int?     // for callbacks rate
-  createdAt       DateTime @default(now())
-  contractor      Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
-  area            Area       @relation(fields: [areaId], references: [id], onDelete: Cascade)
-  reviews         ContractorReview[]
-  inspections     Inspection[]
-  callbacks       WarrantyCallback[]
-  permits         Permit[]
+  id                          String                       @id @default(cuid())
+  contractorId                String
+  areaId                      String
+  trade                       Trade
+  status                      ProjectStatus                @default(PLANNED)
+  plannedStart                DateTime?
+  plannedEnd                  DateTime?
+  actualStart                 DateTime?
+  actualEnd                   DateTime?
+  budgetPlanned               Decimal?
+  budgetActual                Decimal?
+  warrantyMonths              Int?
+  createdAt                   DateTime                     @default(now())
+  reviews                     ContractorReview[]
+  inspections                 Inspection[]
   insurancePermitCorrelations InsurancePermitCorrelation[]
-  
+  permits                     Permit[]
+  area                        Area                         @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  contractor                  Contractor                   @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  callbacks                   WarrantyCallback[]
+
   @@index([contractorId, areaId, status])
   @@map("projects")
 }
 
 model ContractorReview {
-  id          String   @id @default(cuid())
-  projectId   String
-  customerId  String   // tie to your existing Customer/User
-  stars       Int      // 1–5
-  quality     Int      // 1–5
-  timeliness  Int      // 1–5
-  communication Int    // 1–5
-  cleanliness Int      // 1–5
-  safety      Int      // 1–5
-  comment     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  project    Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  customer   User       @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  contractor Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
-  contractorId String
+  id            String     @id @default(cuid())
+  projectId     String
+  customerId    String
+  stars         Int
+  quality       Int
+  timeliness    Int
+  communication Int
+  cleanliness   Int
+  safety        Int
+  comment       String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  contractorId  String
+  contractor    Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  customer      User       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  project       Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, customerId])
   @@index([contractorId, createdAt])
@@ -518,92 +476,83 @@ model ContractorReview {
 }
 
 model Inspection {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   projectId   String
-  type        String   // Pre-work, Progress, Final, etc.
+  type        String
   scheduledAt DateTime
   completedAt DateTime?
   inspector   String?
-  status      String   // Pass, Fail, Conditional
+  status      String
   notes       String?
-  photos      String[] // URLs to photos
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  photos      String[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("inspections")
 }
 
 model WarrantyCallback {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   projectId   String
-  reportedAt  DateTime @default(now())
+  reportedAt  DateTime  @default(now())
   description String
   resolvedAt  DateTime?
   cost        Decimal?
   notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("warranty_callbacks")
 }
 
 model ContractorAreaScore {
-  id          String   @id @default(cuid())
+  id           String     @id @default(cuid())
   contractorId String
-  areaId      String
-  score       Int      // 0-100
-  grade       String   // A, B, C, D, F
-  period      String   // YYYY-MM
-  subscores   Json?    // { reviews: 85, onTime: 90, budget: 88, safety: 92, communication: 89 }
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  contractor Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
-  area       Area       @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  areaId       String
+  score        Int
+  grade        String
+  period       String
+  subscores    Json?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  area         Area       @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  contractor   Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
 
   @@unique([contractorId, areaId, period])
   @@map("contractor_area_scores")
 }
 
-// Permit Tracking Models
 model Permit {
-  id              String      @id @default(cuid())
-  projectId       String
-  contractorId    String
-  permitNumber    String
-  permitType      PermitType
-  status          PermitStatus @default(REQUESTED)
-  description     String
-  workDescription String?
-  propertyAddress String
-  city            String
-  state           String
-  zipCode         String
-  requestedDate   DateTime
-  approvedDate    DateTime?
-  issuedDate      DateTime?
-  completedDate   DateTime?
-  expiredDate     DateTime?
-  cost            Decimal?
-  inspectorName   String?
-  inspectionNotes String?
-  publicUrl       String?     // Link to city permit database
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  
-  // Relations
-  project         Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  contractor      Contractor  @relation(fields: [contractorId], references: [id], onDelete: Cascade)
-  inspections     PermitInspection[]
+  id                          String                       @id @default(cuid())
+  projectId                   String
+  contractorId                String
+  permitNumber                String
+  permitType                  PermitType
+  status                      PermitStatus                 @default(REQUESTED)
+  description                 String
+  workDescription             String?
+  propertyAddress             String
+  city                        String
+  state                       String
+  zipCode                     String
+  requestedDate               DateTime
+  approvedDate                DateTime?
+  issuedDate                  DateTime?
+  completedDate               DateTime?
+  expiredDate                 DateTime?
+  cost                        Decimal?
+  inspectorName               String?
+  inspectionNotes             String?
+  publicUrl                   String?
+  createdAt                   DateTime                     @default(now())
+  updatedAt                   DateTime                     @updatedAt
   insurancePermitCorrelations InsurancePermitCorrelation[]
-  
+  inspections                 PermitInspection[]
+  contractor                  Contractor                   @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  project                     Project                      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
   @@unique([permitNumber, city, state])
   @@unique([contractorId, permitNumber, city])
   @@index([contractorId, requestedDate])
@@ -613,143 +562,126 @@ model Permit {
 }
 
 model PermitInspection {
-  id              String      @id @default(cuid())
-  permitId        String
-  inspectionType  String      // Initial, Rough, Final, etc.
-  scheduledDate   DateTime
-  completedDate   DateTime?
-  inspectorName   String
-  status          String      // Passed, Failed, Conditional
-  notes           String?
-  violations      String?     // Any violations found
-  photos          String[]    // URLs to inspection photos
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  
-  // Relations
-  permit          Permit      @relation(fields: [permitId], references: [id], onDelete: Cascade)
-  
+  id             String    @id @default(cuid())
+  permitId       String
+  inspectionType String
+  scheduledDate  DateTime
+  completedDate  DateTime?
+  inspectorName  String
+  status         String
+  notes          String?
+  violations     String?
+  photos         String[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  permit         Permit    @relation(fields: [permitId], references: [id], onDelete: Cascade)
+
   @@map("permit_inspections")
 }
 
 model ContractorWorkSpecialization {
-  id              String            @id @default(cuid())
+  id              String             @id @default(cuid())
   contractorId    String
   specialization  WorkSpecialization
-  permitCount     Int               @default(0)
-  totalValue      Decimal?          @default(0)
-  averageDuration Int?              // Average days from permit request to completion
-  successRate     Decimal?          @default(0) // Percentage of permits completed successfully
+  permitCount     Int                @default(0)
+  totalValue      Decimal?           @default(0)
+  averageDuration Int?
+  successRate     Decimal?           @default(0)
   lastWorkDate    DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  
-  // Relations
-  contractor      Contractor        @relation(fields: [contractorId], references: [id], onDelete: Cascade)
-  
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  contractor      Contractor         @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+
   @@unique([contractorId, specialization])
   @@index([contractorId])
   @@map("contractor_work_specializations")
 }
 
 model InsurancePermitCorrelation {
-  id              String      @id @default(cuid())
-  contractorId    String
-  projectId       String
+  id                String          @id @default(cuid())
+  contractorId      String
+  projectId         String
   insurancePolicyId String
-  permitId        String
-  correlationType String      // ADDED_BEFORE_PERMIT, ADDED_AFTER_PERMIT, ADDED_DURING_WORK
-  daysDifference  Int?        // Days between insurance addition and permit request
-  riskLevel       String      // LOW, MEDIUM, HIGH based on timing
-  notes           String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  
-  // Relations
-  contractor      Contractor  @relation(fields: [contractorId], references: [id], onDelete: Cascade)
-  project         Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  insurancePolicy InsurancePolicy @relation(fields: [insurancePolicyId], references: [id], onDelete: Cascade)
-  permit          Permit      @relation(fields: [permitId], references: [id], onDelete: Cascade)
-  
+  permitId          String
+  correlationType   String
+  daysDifference    Int?
+  riskLevel         String
+  notes             String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  contractor        Contractor      @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  insurancePolicy   InsurancePolicy @relation(fields: [insurancePolicyId], references: [id], onDelete: Cascade)
+  permit            Permit          @relation(fields: [permitId], references: [id], onDelete: Cascade)
+  project           Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
   @@map("insurance_permit_correlations")
 }
 
-// Contractor Portal Models
 model ContractorPortal {
-  id              String   @id @default(cuid())
-  contractorId    String   @unique
-  username        String   @unique
-  passwordHash    String
-  isActive        Boolean  @default(true)
-  lastLoginAt     DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // Relations
-  contractor      Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
-  challenges      RankingChallenge[]
+  id           String             @id @default(cuid())
+  contractorId String             @unique
+  username     String             @unique
+  passwordHash String
+  isActive     Boolean            @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  contractor   Contractor         @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  challenges   RankingChallenge[]
 
   @@map("contractor_portals")
 }
 
 model RankingChallenge {
-  id              String   @id @default(cuid())
-  contractorId    String
-  portalId        String
-  challengeType   ChallengeType
-  description     String
-  evidence        String?  // URL to supporting documents
-  status          ChallengeStatus @default(PENDING)
-  adminNotes      String?
-  resolvedAt      DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // Relations
-  contractor      Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
-  portal          ContractorPortal @relation(fields: [portalId], references: [id], onDelete: Cascade)
+  id            String           @id @default(cuid())
+  contractorId  String
+  portalId      String
+  challengeType ChallengeType
+  description   String
+  evidence      String?
+  status        ChallengeStatus  @default(PENDING)
+  adminNotes    String?
+  resolvedAt    DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  contractor    Contractor       @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  portal        ContractorPortal @relation(fields: [portalId], references: [id], onDelete: Cascade)
 
   @@map("ranking_challenges")
 }
 
 model ContractorMembership {
-  id              String   @id @default(cuid())
-  contractorId    String   @unique
-  membershipType  MembershipType @default(BASIC)
-  status          MembershipStatus @default(ACTIVE)
-  startDate       DateTime @default(now())
-  endDate         DateTime?
-  autoRenew       Boolean  @default(false)
-  paymentMethod   String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  // Relations
-  contractor      Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
-  
+  id             String           @id @default(cuid())
+  contractorId   String           @unique
+  membershipType MembershipType   @default(BASIC)
+  status         MembershipStatus @default(ACTIVE)
+  startDate      DateTime         @default(now())
+  endDate        DateTime?
+  autoRenew      Boolean          @default(false)
+  paymentMethod  String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  contractor     Contractor       @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+
   @@map("contractor_memberships")
 }
 
-// Audit Logging
 model AuditLog {
-  id             String      @id @default(cuid())
-  actorId        String?     // User who performed the action
-  action         AuditAction
-  targetType     String      // Property, Contractor, etc.
-  targetId       String      // ID of the target entity
-  meta           Json?       // Additional metadata
-  ipAddress      String?
-  userAgent      String?
-  createdAt      DateTime    @default(now())
-  
-  // Relations
-  actor          User?        @relation(fields: [actorId], references: [id], onDelete: SetNull)
-  
+  id         String      @id @default(cuid())
+  actorId    String?
+  action     AuditAction
+  targetType String
+  targetId   String
+  meta       Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime    @default(now())
+  actor      User?       @relation(fields: [actorId], references: [id])
+
   @@index([actorId, createdAt])
   @@map("audit_logs")
 }
 
-// Enums
 enum Role {
   ADMIN
   USER

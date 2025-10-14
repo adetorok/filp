@@ -1,424 +1,398 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
-  Grid,
-  Paper,
-  Typography,
   Box,
+  Container,
+  Typography,
+  Grid,
   Card,
   CardContent,
+  CardActions,
+  Button,
+  Chip,
+  LinearProgress,
+  Avatar,
   List,
   ListItem,
   ListItemText,
-  Chip,
-  CircularProgress,
-  Button,
-  Stack,
-  Avatar,
-  LinearProgress,
-  useTheme
+  ListItemAvatar,
+  Divider,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
-  Dashboard as DashboardIcon,
-  TrendingUp as TrendingUpIcon,
-  Receipt as ReceiptIcon,
-  Assignment as AssignmentIcon,
-  Home as HomeIcon,
-  AttachMoney as MoneyIcon,
-  Schedule as ScheduleIcon,
-  CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon,
-  Error as ErrorIcon
+  TrendingUp,
+  TrendingDown,
+  Home,
+  AttachMoney,
+  Assignment,
+  People,
+  Assessment,
+  Add,
+  ArrowUpward,
+  ArrowDownward,
+  CheckCircle,
+  Schedule,
+  Warning,
 } from '@mui/icons-material';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import axios from 'axios';
-import { apiConfig } from '../../config/api';
-import * as Sentry from '@sentry/react';
-
-axios.defaults.baseURL = apiConfig.baseURL;
-
-interface DashboardStats {
-  propertyStats: Array<{ _id: string; count: number }>;
-  dealStats: Array<{ _id: string; count: number }>;
-  expenseStats: Array<{ _id: string; total: number }>;
-  taskStats: Array<{ _id: string; count: number }>;
-  recentProperties: Array<{
-    _id: string;
-    address: { fullAddress: string };
-    status: string;
-    updatedAt: string;
-    estimatedProfit: number;
-  }>;
-  recentDeals: Array<{
-    _id: string;
-    dealName: string;
-    status: string;
-    estimatedProfit: number;
-    propertyId: { address: { fullAddress: string } };
-    updatedAt: string;
-  }>;
-  monthlyRevenue: Array<{
-    month: string;
-    revenue: number;
-    profit: number;
-  }>;
-  totalRevenue: number;
-  totalProfit: number;
-  activeProjects: number;
-  completedProjects: number;
-}
 
 const Dashboard: React.FC = () => {
   const theme = useTheme();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  const stats = [
+    {
+      title: 'Total Properties',
+      value: '12',
+      change: '+2',
+      changeType: 'positive',
+      icon: <Home />,
+      color: theme.palette.primary.main,
+    },
+    {
+      title: 'Active Deals',
+      value: '8',
+      change: '+1',
+      changeType: 'positive',
+      icon: <TrendingUp />,
+      color: theme.palette.success.main,
+    },
+    {
+      title: 'Total Invested',
+      value: '$2.4M',
+      change: '+$120K',
+      changeType: 'positive',
+      icon: <AttachMoney />,
+      color: theme.palette.warning.main,
+    },
+    {
+      title: 'Net Profit',
+      value: '$340K',
+      change: '+$45K',
+      changeType: 'positive',
+      icon: <Assessment />,
+      color: theme.palette.success.main,
+    },
+  ];
 
-  const fetchDashboardData = async () => {
-    try {
-      const response = await axios.get('/api/dashboard');
-      setStats(response.data);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      Sentry.captureException(error);
-    } finally {
-      setLoading(false);
+  const recentActivities = [
+    {
+      id: 1,
+      type: 'property',
+      title: 'New property added',
+      description: '123 Main St, Austin, TX',
+      time: '2 hours ago',
+      icon: <Home />,
+      color: theme.palette.primary.main,
+    },
+    {
+      id: 2,
+      type: 'deal',
+      title: 'Deal analysis completed',
+      description: 'ROI: 24.5% - Ready to proceed',
+      time: '4 hours ago',
+      icon: <TrendingUp />,
+      color: theme.palette.success.main,
+    },
+    {
+      id: 3,
+      type: 'task',
+      title: 'Task completed',
+      description: 'Permit application submitted',
+      time: '6 hours ago',
+      icon: <CheckCircle />,
+      color: theme.palette.success.main,
+    },
+    {
+      id: 4,
+      type: 'expense',
+      title: 'Expense recorded',
+      description: 'Materials: $2,450',
+      time: '1 day ago',
+      icon: <AttachMoney />,
+      color: theme.palette.warning.main,
+    },
+  ];
+
+  const upcomingTasks = [
+    {
+      id: 1,
+      title: 'Schedule inspection',
+      property: '123 Main St',
+      dueDate: 'Tomorrow',
+      priority: 'high',
+      assignee: 'Mike Johnson',
+    },
+    {
+      id: 2,
+      title: 'Order materials',
+      property: '456 Oak Ave',
+      dueDate: 'In 2 days',
+      priority: 'medium',
+      assignee: 'Sarah Wilson',
+    },
+    {
+      id: 3,
+      title: 'Final walkthrough',
+      property: '789 Pine St',
+      dueDate: 'In 3 days',
+      priority: 'high',
+      assignee: 'John Smith',
+    },
+  ];
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return theme.palette.error.main;
+      case 'medium':
+        return theme.palette.warning.main;
+      case 'low':
+        return theme.palette.success.main;
+      default:
+        return theme.palette.grey[500];
     }
   };
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'completed': return 'success';
-      case 'in progress': return 'warning';
-      case 'analyzing': return 'info';
-      case 'pending': return 'default';
-      default: return 'default';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'completed': return <CheckCircleIcon />;
-      case 'in progress': return <ScheduleIcon />;
-      case 'analyzing': return <WarningIcon />;
-      case 'pending': return <ErrorIcon />;
-      default: return <ErrorIcon />;
-    }
-  };
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress size={60} />
-      </Box>
-    );
-  }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-          Dashboard
+        <Typography variant="h4" fontWeight={700} gutterBottom>
+          Welcome back! 👋
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Welcome back! Here's what's happening with your properties.
+          Here's what's happening with your real estate investments today.
         </Typography>
       </Box>
 
-      {/* Key Metrics */}
+      {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', mr: 2 }}>
-                  <HomeIcon />
-                </Avatar>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Total Properties
-                </Typography>
-              </Box>
-              <Typography variant="h3" sx={{ fontWeight: 700, mb: 1 }}>
-                {stats?.recentProperties.length || 0}
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Active projects
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: 'white' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', mr: 2 }}>
-                  <MoneyIcon />
-                </Avatar>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Total Revenue
-                </Typography>
-              </Box>
-              <Typography variant="h3" sx={{ fontWeight: 700, mb: 1 }}>
-                ${stats?.totalRevenue?.toLocaleString() || '0'}
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                This month
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: 'white' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', mr: 2 }}>
-                  <TrendingUpIcon />
-                </Avatar>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Total Profit
-                </Typography>
-              </Box>
-              <Typography variant="h3" sx={{ fontWeight: 700, mb: 1 }}>
-                ${stats?.totalProfit?.toLocaleString() || '0'}
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Net profit
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', color: 'white' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', mr: 2 }}>
-                  <CheckCircleIcon />
-                </Avatar>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Completed
-                </Typography>
-              </Box>
-              <Typography variant="h3" sx={{ fontWeight: 700, mb: 1 }}>
-                {stats?.completedProjects || 0}
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Projects done
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+        {stats.map((stat, index) => (
+          <Grid item xs={12} sm={6} md={3} key={index}>
+            <Card
+              sx={{
+                height: '100%',
+                background: `linear-gradient(135deg, ${alpha(stat.color, 0.1)} 0%, ${alpha(stat.color, 0.05)} 100%)`,
+                border: `1px solid ${alpha(stat.color, 0.2)}`,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: `0 8px 25px ${alpha(stat.color, 0.15)}`,
+                },
+              }}
+            >
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Avatar
+                    sx={{
+                      backgroundColor: stat.color,
+                      mr: 2,
+                      width: 48,
+                      height: 48,
+                    }}
+                  >
+                    {stat.icon}
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h4" fontWeight={700} color={stat.color}>
+                      {stat.value}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {stat.title}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  {stat.changeType === 'positive' ? (
+                    <ArrowUpward sx={{ color: theme.palette.success.main, mr: 0.5 }} />
+                  ) : (
+                    <ArrowDownward sx={{ color: theme.palette.error.main, mr: 0.5 }} />
+                  )}
+                  <Typography
+                    variant="body2"
+                    color={stat.changeType === 'positive' ? 'success.main' : 'error.main'}
+                    fontWeight={600}
+                  >
+                    {stat.change}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                    vs last month
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
       </Grid>
 
       <Grid container spacing={3}>
-        {/* Property Status Chart */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: 400 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-                Property Status Distribution
-              </Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={stats?.propertyStats || []}
-                    dataKey="count"
-                    nameKey="_id"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    fill="#8884d8"
-                    label={({ _id, count }) => `${_id}: ${count}`}
-                  >
-                    {(stats?.propertyStats || []).map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Deal Status Chart */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: 400 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-                Deal Status Overview
-              </Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={stats?.dealStats || []}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="_id" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#82ca9d" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Revenue Trend */}
+        {/* Recent Activity */}
         <Grid item xs={12} md={8}>
-          <Card sx={{ height: 400 }}>
+          <Card sx={{ height: '100%' }}>
             <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-                Monthly Revenue & Profit Trend
-              </Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={stats?.monthlyRevenue || []}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="revenue" stroke="#8884d8" strokeWidth={3} />
-                  <Line type="monotone" dataKey="profit" stroke="#82ca9d" strokeWidth={3} />
-                </LineChart>
-              </ResponsiveContainer>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>
+                  Recent Activity
+                </Typography>
+                <Button size="small" startIcon={<Add />}>
+                  Add Activity
+                </Button>
+              </Box>
+              <List>
+                {recentActivities.map((activity, index) => (
+                  <React.Fragment key={activity.id}>
+                    <ListItem sx={{ px: 0 }}>
+                      <ListItemAvatar>
+                        <Avatar
+                          sx={{
+                            backgroundColor: alpha(activity.color, 0.1),
+                            color: activity.color,
+                            width: 40,
+                            height: 40,
+                          }}
+                        >
+                          {activity.icon}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Typography variant="subtitle1" fontWeight={600}>
+                            {activity.title}
+                          </Typography>
+                        }
+                        secondary={
+                          <Box>
+                            <Typography variant="body2" color="text.secondary">
+                              {activity.description}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {activity.time}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    </ListItem>
+                    {index < recentActivities.length - 1 && <Divider />}
+                  </React.Fragment>
+                ))}
+              </List>
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Quick Stats */}
+        {/* Upcoming Tasks */}
         <Grid item xs={12} md={4}>
-          <Card sx={{ height: 400 }}>
+          <Card sx={{ height: '100%' }}>
             <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-                Quick Stats
-              </Typography>
-              <Stack spacing={3}>
-                <Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2">Active Projects</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {stats?.activeProjects || 0}
-                    </Typography>
-                  </Box>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={(stats?.activeProjects || 0) * 10} 
-                    sx={{ height: 8, borderRadius: 4 }}
-                  />
-                </Box>
-                
-                <Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2">Completion Rate</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {stats?.completedProjects ? Math.round((stats.completedProjects / (stats.completedProjects + (stats?.activeProjects || 0))) * 100) : 0}%
-                    </Typography>
-                  </Box>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={stats?.completedProjects ? (stats.completedProjects / (stats.completedProjects + (stats?.activeProjects || 0))) * 100 : 0} 
-                    sx={{ height: 8, borderRadius: 4 }}
-                  />
-                </Box>
-
-                <Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    Average Deal Value
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                    ${stats?.recentDeals.length ? Math.round(stats.recentDeals.reduce((sum, deal) => sum + deal.estimatedProfit, 0) / stats.recentDeals.length) : 0}
-                  </Typography>
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Recent Properties */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: 400 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-                Recent Properties
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>
+                  Upcoming Tasks
+                </Typography>
+                <Button size="small" startIcon={<Add />}>
+                  Add Task
+                </Button>
+              </Box>
               <List>
-                {(stats?.recentProperties || []).slice(0, 5).map((property) => (
-                  <ListItem key={property._id} sx={{ px: 0 }}>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                          <HomeIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                            {property.address.fullAddress}
-                          </Typography>
-                        </Box>
-                      }
-                      secondary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Chip
-                            icon={getStatusIcon(property.status)}
-                            label={property.status}
-                            size="small"
-                            color={getStatusColor(property.status) as any}
-                          />
-                          <Typography variant="body2" color="text.secondary">
-                            ${property.estimatedProfit?.toLocaleString() || '0'} profit
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                  </ListItem>
+                {upcomingTasks.map((task, index) => (
+                  <React.Fragment key={task.id}>
+                    <ListItem sx={{ px: 0, py: 2 }}>
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <Typography variant="subtitle2" fontWeight={600} sx={{ flex: 1 }}>
+                              {task.title}
+                            </Typography>
+                            <Chip
+                              label={task.priority}
+                              size="small"
+                              sx={{
+                                backgroundColor: alpha(getPriorityColor(task.priority), 0.1),
+                                color: getPriorityColor(task.priority),
+                                fontWeight: 600,
+                                textTransform: 'capitalize',
+                              }}
+                            />
+                          </Box>
+                        }
+                        secondary={
+                          <Box>
+                            <Typography variant="body2" color="text.secondary">
+                              {task.property}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Due: {task.dueDate} • {task.assignee}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    </ListItem>
+                    {index < upcomingTasks.length - 1 && <Divider />}
+                  </React.Fragment>
                 ))}
               </List>
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Recent Deals */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: 400 }}>
+        {/* Quick Actions */}
+        <Grid item xs={12}>
+          <Card>
             <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-                Recent Deals
+              <Typography variant="h6" fontWeight={600} gutterBottom>
+                Quick Actions
               </Typography>
-              <List>
-                {(stats?.recentDeals || []).slice(0, 5).map((deal) => (
-                  <ListItem key={deal._id} sx={{ px: 0 }}>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                          <TrendingUpIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                            {deal.dealName || deal.propertyId.address.fullAddress}
-                          </Typography>
-                        </Box>
-                      }
-                      secondary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Chip
-                            icon={getStatusIcon(deal.status)}
-                            label={deal.status}
-                            size="small"
-                            color={getStatusColor(deal.status) as any}
-                          />
-                          <Typography variant="body2" color="text.secondary">
-                            ${deal.estimatedProfit?.toLocaleString() || '0'} profit
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    startIcon={<Home />}
+                    sx={{
+                      py: 2,
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                      },
+                    }}
+                  >
+                    Add Property
+                  </Button>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<TrendingUp />}
+                    sx={{ py: 2 }}
+                  >
+                    Analyze Deal
+                  </Button>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<Assignment />}
+                    sx={{ py: 2 }}
+                  >
+                    Create Task
+                  </Button>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<People />}
+                    sx={{ py: 2 }}
+                  >
+                    Find Contractors
+                  </Button>
+                </Grid>
+              </Grid>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
-    </Box>
+    </Container>
   );
 };
 
