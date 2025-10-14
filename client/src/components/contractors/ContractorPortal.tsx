@@ -586,9 +586,9 @@ const ContractorPortal: React.FC = () => {
                             label="Availability"
                           >
                             <MenuItem value="Immediate">Immediate</MenuItem>
-                            <MenuItem value="<2 weeks"><2 weeks</MenuItem>
-                            <MenuItem value="<1 month"><1 month</MenuItem>
-                            <MenuItem value="<3 months"><3 months</MenuItem>
+                            <MenuItem value="<2 weeks">{'<2 weeks'}</MenuItem>
+                            <MenuItem value="<1 month">{'<1 month'}</MenuItem>
+                            <MenuItem value="<3 months">{'<3 months'}</MenuItem>
                           </Select>
                         </FormControl>
                       </Grid>
