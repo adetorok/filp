@@ -187,11 +187,11 @@ const Subscription: React.FC = () => {
               <Typography variant="h5" fontWeight="bold">
                 Current Plan: {subscription.plan === 'free' ? 'Free Trial' : 'Pro'}
               </Typography>
-              <Chip
-                label={getStatusText(subscription.status)}
-                color={getStatusColor(subscription.status) as any}
-                size="medium"
-              />
+        <Chip
+          label={getStatusText(subscription.status)}
+          color={getStatusColor(subscription.status) as any}
+          size="small"
+        />
             </Box>
 
             <Grid container spacing={3}>
