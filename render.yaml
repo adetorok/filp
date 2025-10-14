@@ -3,7 +3,7 @@ services:
     name: homeflip-api
     env: node
     plan: free
-    buildCommand: npm ci && npx prisma generate && npx prisma migrate deploy && cd client && npm ci && npm run build && cd ..
+    buildCommand: npm ci --legacy-peer-deps && npx prisma generate && npx prisma migrate deploy
     startCommand: node server/index.js
     envVars:
       - key: NODE_ENV
@@ -21,7 +21,9 @@ services:
       - key: SENTRY_DSN_BACKEND
         value: https://bc9fd595b3761684158e312f0e7a023d@o4510179879092224.ingest.us.sentry.io/4510179922214913
       - key: FRONTEND_URL
-        value: https://homeflip-api.onrender.com
+        value: https://filp-9j9g9.vercel.app
+      - key: SERVE_CLIENT
+        value: "false"
 
   - type: pserv
     name: homeflip-db
