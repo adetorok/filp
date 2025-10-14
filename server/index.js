@@ -4,6 +4,7 @@ require('./instrument');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const Sentry = require('@sentry/node');
 const prisma = require('./prisma');
 const { securityHeaders, authLimiter, searchLimiter, writeLimiter } = require('./middleware/security');
@@ -27,16 +28,28 @@ const asyncHandler = (fn) => (req, res, next) => {
 app.use(requestId);
 app.use(responseTime);
 app.use(securityHeaders);
+// Flexible CORS: allow configured origins + common hosting domains
+const explicitOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+  process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : undefined,
+  'https://houseflipmg.com',
+  'https://www.houseflipmg.com',
+  'http://localhost:3000',
+].filter(Boolean);
+
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:3000',
-    'https://houseflipmg.com', // Your custom domain
-    'https://www.houseflipmg.com', // www subdomain
-    'https://omo-sena.vercel.app',
-    'https://omo-sena.netlify.app',
-    'http://localhost:3000'
-  ],
-  credentials: true
+  origin: (origin, callback) => {
+    // allow server-to-server or curl (no origin)
+    if (!origin) return callback(null, true);
+    const allowed =
+      explicitOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      origin.endsWith('.netlify.app');
+    if (allowed) return callback(null, true);
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -86,14 +99,22 @@ app.use('/api/permits', require('./routes/permits'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/webhooks', require('./routes/webhooks'));
 
-// Serve static files from React app in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
-  });
+// Do NOT serve the React app from the API unless explicitly enabled.
+// On Render we deploy only the API; frontend lives on Vercel.
+if (process.env.SERVE_CLIENT === 'true') {
+  const buildDir = path.join(__dirname, '../client/build');
+  if (fs.existsSync(buildDir)) {
+    app.use(express.static(buildDir));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(buildDir, 'index.html'));
+    });
+  }
 }
+
+// Simple root route for API base
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', service: 'homeflip-api' });
+});
 
 // Sentry error handler middleware (must be before other error handlers)
 // Note: Sentry v10 uses different middleware syntax
