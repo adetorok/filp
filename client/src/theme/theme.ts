@@ -195,14 +195,6 @@ export const modernTheme = createTheme({
     '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
   ],
   components: {
-    MuiCssBaseline: {
-      styleOverrides: {
-        body: {
-          fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-          backgroundColor: '#fafbfc',
-        },
-      },
-    },
     MuiButton: {
       styleOverrides: {
         root: {
