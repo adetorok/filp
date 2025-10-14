@@ -3,7 +3,7 @@ services:
     name: homeflip-api
     env: node
     plan: free
-    buildCommand: npm ci --legacy-peer-deps && npx prisma generate && npx prisma migrate deploy
+    buildCommand: npm install --legacy-peer-deps && npx prisma generate && npx prisma migrate deploy
     startCommand: node server/index.js
     envVars:
       - key: NODE_ENV
