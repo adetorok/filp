@@ -9,9 +9,6 @@
     "dev": "cd client && npm start",
     "install-client": "cd client && npm ci --legacy-peer-deps"
   },
-  "workspaces": [
-    "client"
-  ],
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
