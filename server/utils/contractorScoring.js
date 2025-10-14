@@ -1,343 +1,490 @@
 /**
- * Contractor Scoring Algorithm with Experience Normalization
+ * Contractor Scoring Algorithm
  * 
- * This module provides comprehensive scoring for contractors that takes into account:
- * - Years of service
- * - Volume of work completed
- * - Legal history (normalized for experience)
- * - Customer reviews
- * - Insurance coverage
- * - Project performance
+ * This service calculates contractor scores based on multiple factors:
+ * - License status and history
+ * - Insurance coverage and claims
+ * - Legal events and violations
+ * - Permit performance and inspection results
+ * - Customer reviews and ratings
+ * - Experience and specialization
  */
 
-/**
- * Calculate the overall contractor score (0-100)
- * @param {Object} contractor - Contractor data with all related information
- * @returns {Object} - Score breakdown and overall grade
- */
-function calculateOverallScore(contractor) {
-  const {
-    reviews = [],
-    legalEvents = [],
-    policies = [],
-    totalProjects = 0,
-    yearsInBusiness = 0,
-    totalValue = 0,
-    projects = []
-  } = contractor;
+class ContractorScoringService {
+  constructor() {
+    this.weights = {
+      license: 0.25,      // 25% - License status and compliance
+      insurance: 0.20,    // 20% - Insurance coverage and claims
+      legal: 0.15,        // 15% - Legal events and violations
+      permits: 0.20,      // 20% - Permit performance and inspections
+      reviews: 0.15,      // 15% - Customer reviews and ratings
+      experience: 0.05    // 5% - Years of experience
+    };
 
-  // Calculate individual component scores
-  const reviewScore = calculateReviewScore(reviews);
-  const onTimeScore = calculateOnTimeScore(projects);
-  const budgetScore = calculateBudgetScore(projects);
-  const safetyScore = calculateSafetyScore(projects);
-  const communicationScore = calculateCommunicationScore(reviews);
-  const riskScore = calculateRiskScore(legalEvents, totalProjects, yearsInBusiness);
-  const insuranceScore = calculateInsuranceScore(policies);
-  const experienceScore = calculateExperienceScore(totalProjects, yearsInBusiness, totalValue);
+    this.scoringRanges = {
+      excellent: { min: 90, max: 100 },
+      good: { min: 80, max: 89 },
+      fair: { min: 70, max: 79 },
+      poor: { min: 60, max: 69 },
+      unacceptable: { min: 0, max: 59 }
+    };
+  }
 
-  // Weighted scoring (adjustable weights)
-  const weights = {
-    reviews: 0.25,        // 25% - Customer satisfaction
-    onTime: 0.20,         // 20% - Project delivery performance
-    budget: 0.10,         // 10% - Cost adherence
-    safety: 0.10,         // 10% - Safety record
-    communication: 0.10,  // 10% - Communication quality
-    risk: 0.10,           // 10% - Legal history (normalized)
-    insurance: 0.05,      // 5% - Insurance coverage
-    experience: 0.10      // 10% - Years of service and volume
-  };
+  /**
+   * Calculate overall contractor score
+   */
+  calculateOverallScore(contractorData) {
+    try {
+      const scores = {
+        license: this.calculateLicenseScore(contractorData.license),
+        insurance: this.calculateInsuranceScore(contractorData.insurance),
+        legal: this.calculateLegalScore(contractorData.legal),
+        permits: this.calculatePermitScore(contractorData.permits),
+        reviews: this.calculateReviewScore(contractorData.reviews),
+        experience: this.calculateExperienceScore(contractorData.experience)
+      };
 
-  // Calculate weighted overall score
-  const overallScore = Math.round(
-    reviewScore * weights.reviews +
-    onTimeScore * weights.onTime +
-    budgetScore * weights.budget +
-    safetyScore * weights.safety +
-    communicationScore * weights.communication +
-    riskScore * weights.risk +
-    insuranceScore * weights.insurance +
-    experienceScore * weights.experience
-  );
+      // Calculate weighted average
+      const overallScore = Object.keys(scores).reduce((total, key) => {
+        return total + (scores[key] * this.weights[key]);
+      }, 0);
 
-  // Calculate grade
-  const grade = calculateGrade(overallScore);
+      // Apply time decay for older data
+      const timeDecayFactor = this.calculateTimeDecay(contractorData.lastUpdated);
+      const finalScore = Math.round(overallScore * timeDecayFactor);
 
-  return {
-    overallScore: Math.max(0, Math.min(100, overallScore)),
-    grade,
-    subscores: {
-      reviews: reviewScore,
-      onTime: onTimeScore,
-      budget: budgetScore,
-      safety: safetyScore,
-      communication: communicationScore,
-      risk: riskScore,
-      insurance: insuranceScore,
-      experience: experienceScore
-    },
-    experienceFactor: calculateExperienceFactor(totalProjects, yearsInBusiness),
-    sampleSize: reviews.length
-  };
-}
+      return {
+        overallScore: Math.min(100, Math.max(0, finalScore)),
+        componentScores: scores,
+        weights: this.weights,
+        timeDecayFactor,
+        grade: this.getScoreGrade(finalScore),
+        calculatedAt: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error calculating contractor score:', error);
+      return {
+        overallScore: 0,
+        error: error.message,
+        calculatedAt: new Date().toISOString()
+      };
+    }
+  }
 
-/**
- * Calculate review score using Bayesian averaging
- * @param {Array} reviews - Array of review objects
- * @returns {number} - Score 0-100
- */
-function calculateReviewScore(reviews) {
-  if (!reviews || reviews.length === 0) return 50; // Neutral score for no reviews
-  
-  const totalStars = reviews.reduce((sum, review) => sum + review.stars, 0);
-  const reviewCount = reviews.length;
-  
-  // Bayesian average with prior (prevents new contractors from being perfect)
-  const priorMean = 4.2; // Prior average rating
-  const priorWeight = 8;  // Prior sample size
-  
-  const bayesianAverage = (totalStars + priorMean * priorWeight) / (reviewCount + priorWeight);
-  
-  // Convert 1-5 scale to 0-100 scale
-  return Math.round((bayesianAverage / 5) * 100);
-}
+  /**
+   * Calculate license score (0-100)
+   */
+  calculateLicenseScore(licenseData) {
+    if (!licenseData || !licenseData.verified) {
+      return 0;
+    }
 
-/**
- * Calculate on-time delivery score
- * @param {Array} projects - Array of completed projects
- * @returns {number} - Score 0-100
- */
-function calculateOnTimeScore(projects) {
-  if (!projects || projects.length === 0) return 50;
-  
-  const completedProjects = projects.filter(p => p.status === 'COMPLETED' && p.plannedEnd && p.actualEnd);
-  if (completedProjects.length === 0) return 50;
-  
-  const onTimeProjects = completedProjects.filter(p => {
-    const plannedEnd = new Date(p.plannedEnd);
-    const actualEnd = new Date(p.actualEnd);
-    return actualEnd <= plannedEnd;
-  });
-  
-  const onTimeRate = onTimeProjects.length / completedProjects.length;
-  return Math.round(onTimeRate * 100);
-}
+    let score = 0;
 
-/**
- * Calculate budget adherence score
- * @param {Array} projects - Array of completed projects
- * @returns {number} - Score 0-100
- */
-function calculateBudgetScore(projects) {
-  if (!projects || projects.length === 0) return 50;
-  
-  const budgetedProjects = projects.filter(p => 
-    p.status === 'COMPLETED' && 
-    p.budgetPlanned && 
-    p.budgetActual && 
-    p.budgetPlanned > 0
-  );
-  
-  if (budgetedProjects.length === 0) return 50;
-  
-  const totalVariance = budgetedProjects.reduce((sum, p) => {
-    const variance = Math.abs(p.budgetActual - p.budgetPlanned) / p.budgetPlanned;
-    return sum + Math.min(1, variance); // Cap at 100% variance
-  }, 0);
-  
-  const averageVariance = totalVariance / budgetedProjects.length;
-  return Math.round(Math.max(0, (1 - averageVariance) * 100));
-}
+    // Base score for having a valid license
+    if (licenseData.status === 'Active') {
+      score += 40;
+    } else if (licenseData.status === 'Suspended') {
+      score += 10;
+    } else if (licenseData.status === 'Revoked') {
+      score += 0;
+    }
 
-/**
- * Calculate safety score based on inspections
- * @param {Array} projects - Array of projects with inspections
- * @returns {number} - Score 0-100
- */
-function calculateSafetyScore(projects) {
-  if (!projects || projects.length === 0) return 50;
-  
-  const projectsWithInspections = projects.filter(p => p.inspections && p.inspections.length > 0);
-  if (projectsWithInspections.length === 0) return 50;
-  
-  const totalViolations = projectsWithInspections.reduce((sum, p) => {
-    return sum + p.inspections.reduce((inspSum, insp) => inspSum + insp.violations, 0);
-  }, 0);
-  
-  const totalInspections = projectsWithInspections.reduce((sum, p) => sum + p.inspections.length, 0);
-  const violationRate = totalViolations / totalInspections;
-  
-  // Convert violation rate to score (lower violations = higher score)
-  return Math.round(Math.max(0, (1 - violationRate) * 100));
-}
+    // License age bonus (longer = better)
+    if (licenseData.issueDate) {
+      const yearsActive = this.getYearsSince(licenseData.issueDate);
+      score += Math.min(20, yearsActive * 2); // Max 20 points for 10+ years
+    }
 
-/**
- * Calculate communication score from reviews
- * @param {Array} reviews - Array of review objects
- * @returns {number} - Score 0-100
- */
-function calculateCommunicationScore(reviews) {
-  if (!reviews || reviews.length === 0) return 50;
-  
-  const totalCommunication = reviews.reduce((sum, review) => sum + (review.communication || 0), 0);
-  const averageCommunication = totalCommunication / reviews.length;
-  
-  // Convert 1-5 scale to 0-100 scale
-  return Math.round((averageCommunication / 5) * 100);
-}
+    // Expiration check
+    if (licenseData.expirationDate) {
+      const daysUntilExpiry = this.getDaysUntil(licenseData.expirationDate);
+      if (daysUntilExpiry > 90) {
+        score += 20; // Good time until expiry
+      } else if (daysUntilExpiry > 30) {
+        score += 10; // Moderate time until expiry
+      } else if (daysUntilExpiry > 0) {
+        score += 5; // Close to expiry
+      } else {
+        score += 0; // Expired
+      }
+    }
 
-/**
- * Calculate risk score with experience normalization
- * @param {Array} legalEvents - Array of legal events
- * @param {number} totalProjects - Total number of projects
- * @param {number} yearsInBusiness - Years in business
- * @returns {number} - Score 0-100
- */
-function calculateRiskScore(legalEvents, totalProjects = 0, yearsInBusiness = 0) {
-  if (!legalEvents || legalEvents.length === 0) return 100;
-  
-  let score = 100;
-  const now = new Date();
-  
-  // Calculate experience normalization factor
-  const experienceFactor = calculateExperienceFactor(totalProjects, yearsInBusiness);
-  
-  for (const event of legalEvents) {
-    const monthsSinceEvent = Math.floor((now - new Date(event.filedOn || event.createdAt)) / (1000 * 60 * 60 * 24 * 30));
-    const timeDecay = Math.exp(-monthsSinceEvent / 24);
+    // Bond amount bonus
+    if (licenseData.bondAmount) {
+      const bondAmount = parseInt(licenseData.bondAmount.replace(/[^0-9]/g, ''));
+      if (bondAmount >= 100000) {
+        score += 10;
+      } else if (bondAmount >= 50000) {
+        score += 5;
+      }
+    }
+
+    // Workers compensation bonus
+    if (licenseData.workersCompensation && licenseData.workersCompensation === 'Yes') {
+      score += 10;
+    }
+
+    return Math.min(100, score);
+  }
+
+  /**
+   * Calculate insurance score (0-100)
+   */
+  calculateInsuranceScore(insuranceData) {
+    if (!insuranceData || !insuranceData.verified || !insuranceData.policies) {
+      return 0;
+    }
+
+    let score = 0;
+    const policies = insuranceData.policies;
+
+    // General liability insurance
+    const generalLiability = policies.find(p => p.type === 'General Liability');
+    if (generalLiability) {
+      if (generalLiability.status === 'Active') {
+        score += 30;
+        
+        // Coverage amount bonus
+        if (generalLiability.coverageAmount >= 2000000) {
+          score += 20;
+        } else if (generalLiability.coverageAmount >= 1000000) {
+          score += 15;
+        } else if (generalLiability.coverageAmount >= 500000) {
+          score += 10;
+        }
+
+        // Expiration check
+        const daysUntilExpiry = this.getDaysUntil(generalLiability.expirationDate);
+        if (daysUntilExpiry > 90) {
+          score += 10;
+        } else if (daysUntilExpiry > 30) {
+          score += 5;
+        }
+      }
+    }
+
+    // Workers compensation insurance
+    const workersComp = policies.find(p => p.type === 'Workers Compensation');
+    if (workersComp && workersComp.status === 'Active') {
+      score += 20;
+      
+      // Coverage amount bonus
+      if (workersComp.coverageAmount >= 1000000) {
+        score += 10;
+      } else if (workersComp.coverageAmount >= 500000) {
+        score += 5;
+      }
+    }
+
+    // Additional coverage types
+    const additionalCoverage = policies.filter(p => 
+      !['General Liability', 'Workers Compensation'].includes(p.type) && 
+      p.status === 'Active'
+    );
+    score += Math.min(20, additionalCoverage.length * 5);
+
+    return Math.min(100, score);
+  }
+
+  /**
+   * Calculate legal score (0-100)
+   */
+  calculateLegalScore(legalData) {
+    if (!legalData || !legalData.events) {
+      return 100; // No legal events = perfect score
+    }
+
+    const events = legalData.events;
+    let score = 100; // Start with perfect score
+
+    // Deduct points for legal events
+    events.forEach(event => {
+      const ageInYears = this.getYearsSince(event.date);
+      const timeDecay = Math.max(0.1, 1 - (ageInYears * 0.1)); // Events older than 10 years have minimal impact
+
+      switch (event.severity) {
+        case 'Critical':
+          score -= 50 * timeDecay;
+          break;
+        case 'Major':
+          score -= 25 * timeDecay;
+          break;
+        case 'Minor':
+          score -= 10 * timeDecay;
+          break;
+        case 'Info':
+          score -= 5 * timeDecay;
+          break;
+      }
+
+      // Additional penalty for unresolved events
+      if (event.status !== 'Resolved' && event.status !== 'Closed') {
+        score -= 15;
+      }
+    });
+
+    return Math.max(0, Math.min(100, score));
+  }
+
+  /**
+   * Calculate permit performance score (0-100)
+   */
+  calculatePermitScore(permitData) {
+    if (!permitData || !permitData.permits || permitData.permits.length === 0) {
+      return 50; // Neutral score for no permit history
+    }
+
+    const permits = permitData.permits;
+    let score = 0;
+
+    // Completion rate
+    const completedPermits = permits.filter(p => p.status === 'Finaled').length;
+    const completionRate = completedPermits / permits.length;
+    score += completionRate * 30;
+
+    // Average days to completion
+    const completedPermitsWithDays = permits.filter(p => p.status === 'Finaled' && p.daysOpen);
+    if (completedPermitsWithDays.length > 0) {
+      const avgDays = completedPermitsWithDays.reduce((sum, p) => sum + p.daysOpen, 0) / completedPermitsWithDays.length;
+      
+      // Score based on how quickly permits are completed
+      if (avgDays <= 30) {
+        score += 25;
+      } else if (avgDays <= 60) {
+        score += 20;
+      } else if (avgDays <= 90) {
+        score += 15;
+      } else if (avgDays <= 120) {
+        score += 10;
+      } else {
+        score += 5;
+      }
+    }
+
+    // Inspection pass rate
+    const allInspections = permits.flatMap(p => p.inspections || []);
+    if (allInspections.length > 0) {
+      const passedInspections = allInspections.filter(i => i.outcome === 'Pass').length;
+      const passRate = passedInspections / allInspections.length;
+      score += passRate * 25;
+    }
+
+    // Volume bonus (more permits = more experience)
+    const volumeBonus = Math.min(20, permits.length * 2);
+    score += volumeBonus;
+
+    return Math.min(100, score);
+  }
+
+  /**
+   * Calculate review score (0-100)
+   */
+  calculateReviewScore(reviewData) {
+    if (!reviewData || !reviewData.reviews || reviewData.reviews.length === 0) {
+      return 50; // Neutral score for no reviews
+    }
+
+    const reviews = reviewData.reviews;
+    let score = 0;
+
+    // Average rating
+    const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+    score += avgRating * 20; // 5 stars = 100 points
+
+    // Review volume bonus
+    const volumeBonus = Math.min(30, reviews.length * 3);
+    score += volumeBonus;
+
+    // Verified review bonus
+    const verifiedReviews = reviews.filter(r => r.verified).length;
+    const verificationBonus = (verifiedReviews / reviews.length) * 20;
+    score += verificationBonus;
+
+    // Recent review bonus
+    const recentReviews = reviews.filter(r => {
+      const reviewDate = new Date(r.date);
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      return reviewDate > sixMonthsAgo;
+    });
+    const recencyBonus = Math.min(20, recentReviews.length * 5);
+    score += recencyBonus;
+
+    return Math.min(100, score);
+  }
+
+  /**
+   * Calculate experience score (0-100)
+   */
+  calculateExperienceScore(experienceData) {
+    if (!experienceData || !experienceData.yearsExperience) {
+      return 0;
+    }
+
+    const years = experienceData.yearsExperience;
+    let score = 0;
+
+    // Base score for years of experience
+    if (years >= 10) {
+      score = 100;
+    } else if (years >= 7) {
+      score = 80;
+    } else if (years >= 5) {
+      score = 60;
+    } else if (years >= 3) {
+      score = 40;
+    } else if (years >= 1) {
+      score = 20;
+    }
+
+    // Specialization bonus
+    if (experienceData.specializations && experienceData.specializations.length > 0) {
+      score += Math.min(20, experienceData.specializations.length * 5);
+    }
+
+    return Math.min(100, score);
+  }
+
+  /**
+   * Calculate time decay factor for data freshness
+   */
+  calculateTimeDecay(lastUpdated) {
+    if (!lastUpdated) {
+      return 0.5; // Heavy penalty for no update date
+    }
+
+    const daysSinceUpdate = this.getDaysSince(lastUpdated);
     
-    let penalty = 0;
-    switch (event.severity) {
-      case 'CRITICAL':
-        penalty = 35;
-        break;
-      case 'HIGH':
-        penalty = 20;
-        break;
-      case 'MEDIUM':
-        penalty = 10;
-        break;
-      case 'LOW':
-        penalty = 5;
-        break;
+    if (daysSinceUpdate <= 7) {
+      return 1.0; // No decay for recent data
+    } else if (daysSinceUpdate <= 30) {
+      return 0.95; // Minimal decay
+    } else if (daysSinceUpdate <= 90) {
+      return 0.85; // Moderate decay
+    } else if (daysSinceUpdate <= 180) {
+      return 0.70; // Significant decay
+    } else {
+      return 0.50; // Heavy decay for old data
+    }
+  }
+
+  /**
+   * Get score grade based on numerical score
+   */
+  getScoreGrade(score) {
+    for (const [grade, range] of Object.entries(this.scoringRanges)) {
+      if (score >= range.min && score <= range.max) {
+        return grade;
+      }
+    }
+    return 'unacceptable';
+  }
+
+  /**
+   * Generate score explanation for contractors
+   */
+  generateScoreExplanation(scoreData) {
+    const { overallScore, componentScores, weights, grade } = scoreData;
+    
+    const explanation = {
+      overallScore,
+      grade,
+      breakdown: Object.keys(componentScores).map(component => ({
+        component,
+        score: componentScores[component],
+        weight: weights[component],
+        contribution: Math.round(componentScores[component] * weights[component]),
+        description: this.getComponentDescription(component, componentScores[component])
+      })),
+      recommendations: this.getRecommendations(componentScores),
+      lastUpdated: new Date().toISOString()
+    };
+
+    return explanation;
+  }
+
+  /**
+   * Get component description
+   */
+  getComponentDescription(component, score) {
+    const descriptions = {
+      license: score >= 80 ? 'Valid license with good standing' : 
+               score >= 60 ? 'License needs attention' : 'License issues detected',
+      insurance: score >= 80 ? 'Comprehensive insurance coverage' : 
+                 score >= 60 ? 'Insurance coverage adequate' : 'Insurance coverage insufficient',
+      legal: score >= 80 ? 'Clean legal record' : 
+             score >= 60 ? 'Minor legal issues' : 'Significant legal concerns',
+      permits: score >= 80 ? 'Excellent permit performance' : 
+               score >= 60 ? 'Good permit performance' : 'Permit performance needs improvement',
+      reviews: score >= 80 ? 'Excellent customer satisfaction' : 
+               score >= 60 ? 'Good customer satisfaction' : 'Customer satisfaction needs improvement',
+      experience: score >= 80 ? 'Extensive experience' : 
+                  score >= 60 ? 'Good experience level' : 'Limited experience'
+    };
+    
+    return descriptions[component] || 'No data available';
+  }
+
+  /**
+   * Get improvement recommendations
+   */
+  getRecommendations(componentScores) {
+    const recommendations = [];
+    
+    if (componentScores.license < 70) {
+      recommendations.push('Renew or update contractor license');
     }
     
-    // Apply experience normalization - more experienced contractors get reduced penalties
-    const normalizedPenalty = penalty * (1 - experienceFactor);
-    score -= normalizedPenalty * timeDecay;
+    if (componentScores.insurance < 70) {
+      recommendations.push('Increase insurance coverage or update policies');
+    }
+    
+    if (componentScores.legal < 70) {
+      recommendations.push('Address any outstanding legal issues');
+    }
+    
+    if (componentScores.permits < 70) {
+      recommendations.push('Improve permit completion times and inspection pass rates');
+    }
+    
+    if (componentScores.reviews < 70) {
+      recommendations.push('Focus on customer satisfaction and request more reviews');
+    }
+    
+    if (componentScores.experience < 70) {
+      recommendations.push('Gain more experience in specialized areas');
+    }
+    
+    return recommendations;
   }
-  
-  return Math.max(0, Math.round(score));
+
+  /**
+   * Utility: Get years since date
+   */
+  getYearsSince(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    return (now - date) / (365.25 * 24 * 60 * 60 * 1000);
+  }
+
+  /**
+   * Utility: Get days since date
+   */
+  getDaysSince(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    return Math.floor((now - date) / (24 * 60 * 60 * 1000));
+  }
+
+  /**
+   * Utility: Get days until date
+   */
+  getDaysUntil(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    return Math.floor((date - now) / (24 * 60 * 60 * 1000));
+  }
 }
 
-/**
- * Calculate insurance score
- * @param {Array} policies - Array of insurance policies
- * @returns {number} - Score 0-100
- */
-function calculateInsuranceScore(policies) {
-  if (!policies || policies.length === 0) return 0;
-  
-  const activePolicies = policies.filter(p => 
-    p.expiresOn && new Date(p.expiresOn) > new Date()
-  );
-  
-  if (activePolicies.length === 0) return 30;
-  
-  const hasGL = activePolicies.some(p => p.type === 'GL');
-  const hasWC = activePolicies.some(p => p.type === 'WC');
-  
-  let score = 0;
-  if (hasGL) {
-    const glPolicy = activePolicies.find(p => p.type === 'GL');
-    const coverage = glPolicy.coverageEachOccur || 0;
-    if (coverage >= 2000000) score += 100;
-    else if (coverage >= 1000000) score += 80;
-    else if (coverage >= 500000) score += 60;
-    else score += 40;
-  }
-  
-  if (hasWC) score += 5;
-  
-  return Math.min(100, score);
-}
-
-/**
- * Calculate experience score based on years and volume
- * @param {number} totalProjects - Total projects completed
- * @param {number} yearsInBusiness - Years in business
- * @param {number} totalValue - Total value of projects
- * @returns {number} - Score 0-100
- */
-function calculateExperienceScore(totalProjects, yearsInBusiness, totalValue) {
-  let score = 0;
-  
-  // Years in business (0-40 points)
-  if (yearsInBusiness > 0) {
-    score += Math.min(40, yearsInBusiness * 2);
-  }
-  
-  // Project volume (0-30 points)
-  if (totalProjects > 0) {
-    // Logarithmic scaling for project count
-    score += Math.min(30, Math.log10(totalProjects) * 15);
-  }
-  
-  // Project value (0-30 points)
-  if (totalValue && totalValue > 0) {
-    // Logarithmic scaling for project value (in millions)
-    const valueInMillions = Number(totalValue) / 1000000;
-    score += Math.min(30, Math.log10(valueInMillions + 1) * 15);
-  }
-  
-  return Math.min(100, score);
-}
-
-/**
- * Calculate experience normalization factor
- * @param {number} totalProjects - Total projects completed
- * @param {number} yearsInBusiness - Years in business
- * @returns {number} - Factor 0-0.5
- */
-function calculateExperienceFactor(totalProjects, yearsInBusiness) {
-  let projectFactor = 0;
-  if (totalProjects > 0) {
-    // Logarithmic scaling: more projects = diminishing returns
-    projectFactor = Math.min(0.3, Math.log10(totalProjects) * 0.1);
-  }
-  
-  let yearsFactor = 0;
-  if (yearsInBusiness > 0) {
-    // Linear scaling up to 20 years, then capped
-    yearsFactor = Math.min(0.2, yearsInBusiness * 0.01);
-  }
-  
-  return Math.min(0.5, projectFactor + yearsFactor);
-}
-
-/**
- * Calculate letter grade from score
- * @param {number} score - Score 0-100
- * @returns {string} - Grade A-F
- */
-function calculateGrade(score) {
-  if (score >= 90) return 'A';
-  if (score >= 80) return 'B';
-  if (score >= 70) return 'C';
-  if (score >= 60) return 'D';
-  return 'F';
-}
-
-module.exports = {
-  calculateOverallScore,
-  calculateReviewScore,
-  calculateOnTimeScore,
-  calculateBudgetScore,
-  calculateSafetyScore,
-  calculateCommunicationScore,
-  calculateRiskScore,
-  calculateInsuranceScore,
-  calculateExperienceScore,
-  calculateExperienceFactor,
-  calculateGrade
-};
+module.exports = ContractorScoringService;

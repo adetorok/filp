@@ -1,122 +1,175 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Button,
+  Container,
   Typography,
-  Paper,
-  Grid,
+  Button,
   Card,
   CardContent,
+  Grid,
+  TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
+  Chip,
+  IconButton,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  IconButton,
-  Chip
+  Paper,
+  Avatar,
+  Menu,
+  ListItemIcon,
+  ListItemText,
+  Fab,
+  useTheme,
+  alpha,
+  Alert,
+  Snackbar,
+  Divider,
+  LinearProgress,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText as MuiListItemText,
 } from '@mui/material';
-import type { SelectChangeEvent } from '@mui/material/Select';
 import {
   Add as AddIcon,
+  MoreVert as MoreVertIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Receipt as ReceiptIcon
+  Visibility as ViewIcon,
+  Receipt as ReceiptIcon,
+  AttachMoney as AttachMoneyIcon,
+  Category as CategoryIcon,
+  CalendarToday as CalendarIcon,
+  FilterList as FilterIcon,
+  Search as SearchIcon,
+  TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
+  PieChart as PieChartIcon,
 } from '@mui/icons-material';
-import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Expense {
-  _id: string;
-  propertyId: {
-    _id: string;
-    address: { fullAddress: string };
-  };
+  id: string;
+  property: string;
   category: string;
-  subcategory: string;
+  vendor: string;
   description: string;
   amount: number;
-  vendor: string;
   date: string;
   paymentMethod: string;
+  receipt: string;
+  enteredBy: string;
+  createdAt: string;
 }
 
 const Expenses: React.FC = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const { user } = useAuth();
+  const theme = useTheme();
+
   const [formData, setFormData] = useState({
-    propertyId: '',
+    property: '',
     category: '',
-    subcategory: '',
+    vendor: '',
     description: '',
     amount: 0,
-    vendor: '',
-    paymentMethod: 'Cash',
-    date: new Date().toISOString().split('T')[0]
+    date: '',
+    paymentMethod: '',
+    receipt: '',
   });
 
+  // Mock data for demonstration
   useEffect(() => {
-    fetchExpenses();
-    fetchProperties();
+    const mockExpenses: Expense[] = [
+      {
+        id: '1',
+        property: '123 Main St, Austin, TX',
+        category: 'Materials',
+        vendor: 'Home Depot',
+        description: 'Lumber and drywall materials',
+        amount: 2500,
+        date: '2024-01-15',
+        paymentMethod: 'Credit Card',
+        receipt: 'receipt_001.pdf',
+        enteredBy: 'John Smith',
+        createdAt: '2024-01-15',
+      },
+      {
+        id: '2',
+        property: '123 Main St, Austin, TX',
+        category: 'Labor',
+        vendor: 'Johnson Construction',
+        description: 'Framing and drywall installation',
+        amount: 4500,
+        date: '2024-01-20',
+        paymentMethod: 'Check',
+        receipt: 'receipt_002.pdf',
+        enteredBy: 'John Smith',
+        createdAt: '2024-01-20',
+      },
+      {
+        id: '3',
+        property: '456 Oak Ave, Dallas, TX',
+        category: 'Permits',
+        vendor: 'City of Dallas',
+        description: 'Building permit and inspection fees',
+        amount: 850,
+        date: '2024-02-01',
+        paymentMethod: 'ACH',
+        receipt: 'receipt_003.pdf',
+        enteredBy: 'Sarah Johnson',
+        createdAt: '2024-02-01',
+      },
+      {
+        id: '4',
+        property: '789 Pine St, Houston, TX',
+        category: 'Appliances',
+        vendor: 'Best Buy',
+        description: 'Kitchen appliances package',
+        amount: 3200,
+        date: '2024-01-25',
+        paymentMethod: 'Credit Card',
+        receipt: 'receipt_004.pdf',
+        enteredBy: 'Mike Chen',
+        createdAt: '2024-01-25',
+      },
+    ];
+    setExpenses(mockExpenses);
+    setLoading(false);
   }, []);
 
-  const fetchExpenses = async () => {
-    try {
-      const response = await axios.get('/api/expenses');
-      setExpenses(response.data);
-    } catch (error) {
-      console.error('Error fetching expenses:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchProperties = async () => {
-    try {
-      const response = await axios.get('/api/properties');
-      setProperties(response.data);
-    } catch (error) {
-      console.error('Error fetching properties:', error);
-    }
-  };
-
-  const handleOpen = (expense?: Expense) => {
-    if (expense) {
-      setEditingExpense(expense);
-      setFormData({
-        propertyId: expense.propertyId._id,
-        category: expense.category,
-        subcategory: expense.subcategory || '',
-        description: expense.description,
-        amount: expense.amount,
-        vendor: expense.vendor || '',
-        paymentMethod: expense.paymentMethod,
-        date: expense.date.split('T')[0]
-      });
-    } else {
-      setEditingExpense(null);
-      setFormData({
-        propertyId: '',
-        category: '',
-        subcategory: '',
-        description: '',
-        amount: 0,
-        vendor: '',
-        paymentMethod: 'Cash',
-        date: new Date().toISOString().split('T')[0]
-      });
-    }
+  const handleOpen = () => {
+    setEditingExpense(null);
+    setFormData({
+      property: '',
+      category: '',
+      vendor: '',
+      description: '',
+      amount: 0,
+      date: '',
+      paymentMethod: '',
+      receipt: '',
+    });
     setOpen(true);
   };
 
@@ -125,299 +178,526 @@ const Expenses: React.FC = () => {
     setEditingExpense(null);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'amount' ? Number(value) : value
-    }));
-  };
-
-  const handleSelectChange = (e: SelectChangeEvent<string>) => {
-    const { name, value } = e.target as { name: string; value: string };
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (editingExpense) {
-        await axios.put(`/api/expenses/${editingExpense._id}`, formData);
-      } else {
-        await axios.post('/api/expenses', formData);
-      }
-      fetchExpenses();
-      handleClose();
-    } catch (error) {
-      console.error('Error saving expense:', error);
+    const newExpense: Expense = {
+      id: editingExpense?.id || Date.now().toString(),
+      ...formData,
+      enteredBy: user?.name || 'Current User',
+      createdAt: editingExpense?.createdAt || new Date().toISOString().split('T')[0],
+    };
+
+    if (editingExpense) {
+      setExpenses(expenses.map(e => e.id === editingExpense.id ? newExpense : e));
+      setSnackbarMessage('Expense updated successfully!');
+    } else {
+      setExpenses([...expenses, newExpense]);
+      setSnackbarMessage('Expense added successfully!');
     }
+    setSnackbarOpen(true);
+    handleClose();
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this expense?')) {
-      try {
-        await axios.delete(`/api/expenses/${id}`);
-        fetchExpenses();
-      } catch (error) {
-        console.error('Error deleting expense:', error);
-      }
-    }
+  const handleEdit = (expense: Expense) => {
+    setEditingExpense(expense);
+    setFormData({
+      property: expense.property,
+      category: expense.category,
+      vendor: expense.vendor,
+      description: expense.description,
+      amount: expense.amount,
+      date: expense.date,
+      paymentMethod: expense.paymentMethod,
+      receipt: expense.receipt,
+    });
+    setOpen(true);
+  };
+
+  const handleDelete = (expense: Expense) => {
+    setExpenses(expenses.filter(e => e.id !== expense.id));
+    setSnackbarMessage('Expense deleted successfully!');
+    setSnackbarOpen(true);
+  };
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>, expense: Expense) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedExpense(expense);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedExpense(null);
   };
 
   const getCategoryColor = (category: string) => {
     const colors: { [key: string]: string } = {
-      'Acquisition': 'primary',
-      'Rehab': 'secondary',
-      'Holding': 'warning',
-      'Selling': 'info',
-      'Financing': 'success',
-      'Other': 'default'
+      'Materials': theme.palette.primary.main,
+      'Labor': theme.palette.success.main,
+      'Permits': theme.palette.warning.main,
+      'Appliances': theme.palette.error.main,
+      'Utilities': theme.palette.info.main,
+      'Marketing': theme.palette.secondary.main,
     };
-    return colors[category] || 'default';
+    return colors[category] || theme.palette.grey[500];
   };
 
-  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const filteredExpenses = expenses.filter(expense => {
+    const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         expense.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         expense.property.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = categoryFilter === 'all' || expense.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
 
-  if (loading) {
-    return <Typography>Loading...</Typography>;
-  }
+  const stats = [
+    {
+      title: 'Total Expenses',
+      value: expenses.length,
+      icon: <ReceiptIcon />,
+      color: theme.palette.primary.main,
+    },
+    {
+      title: 'Total Amount',
+      value: `$${expenses.reduce((sum, e) => sum + e.amount, 0).toLocaleString()}`,
+      icon: <AttachMoneyIcon />,
+      color: theme.palette.success.main,
+    },
+    {
+      title: 'This Month',
+      value: `$${expenses
+        .filter(e => new Date(e.date).getMonth() === new Date().getMonth())
+        .reduce((sum, e) => sum + e.amount, 0)
+        .toLocaleString()}`,
+      icon: <CalendarIcon />,
+      color: theme.palette.warning.main,
+    },
+    {
+      title: 'Avg per Expense',
+      value: `$${Math.round(expenses.reduce((sum, e) => sum + e.amount, 0) / expenses.length || 0).toLocaleString()}`,
+      icon: <TrendingUpIcon />,
+      color: theme.palette.info.main,
+    },
+  ];
+
+  // Calculate category breakdown
+  const categoryBreakdown = expenses.reduce((acc, expense) => {
+    acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
+    return acc;
+  }, {} as { [key: string]: number });
+
+  const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
 
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      {/* Header */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" fontWeight={700} gutterBottom>
           Expenses
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpen()}
-        >
-          Add Expense
-        </Button>
+        <Typography variant="body1" color="text.secondary">
+          Track and categorize all project expenses
+        </Typography>
       </Box>
 
-      {/* Summary Cards */}
-      <Grid container spacing={3} mb={3}>
-        <Grid item xs={12} sm={6} md={3}>
+      {/* Stats Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {stats.map((stat, index) => (
+          <Grid item xs={12} sm={6} md={3} key={index}>
+            <Card
+              sx={{
+                background: `linear-gradient(135deg, ${alpha(stat.color, 0.1)} 0%, ${alpha(stat.color, 0.05)} 100%)`,
+                border: `1px solid ${alpha(stat.color, 0.2)}`,
+              }}
+            >
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Avatar sx={{ backgroundColor: stat.color, mr: 2 }}>
+                    {stat.icon}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h4" fontWeight={700} color={stat.color}>
+                      {stat.value}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {stat.title}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      <Grid container spacing={3}>
+        {/* Category Breakdown */}
+        <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Total Expenses
+              <Typography variant="h6" gutterBottom>
+                Expense Breakdown
               </Typography>
-              <Typography variant="h4">
-                ${totalExpenses.toLocaleString()}
-              </Typography>
+              <List>
+                {Object.entries(categoryBreakdown).map(([category, amount]) => {
+                  const percentage = (amount / totalAmount) * 100;
+                  return (
+                    <ListItem key={category} sx={{ px: 0 }}>
+                      <ListItemAvatar>
+                        <Avatar sx={{ backgroundColor: getCategoryColor(category), width: 32, height: 32 }}>
+                          <CategoryIcon fontSize="small" />
+                        </Avatar>
+                      </ListItemAvatar>
+                      <MuiListItemText
+                        primary={category}
+                        secondary={
+                          <Box>
+                            <Typography variant="body2" color="text.secondary">
+                              ${amount.toLocaleString()} ({percentage.toFixed(1)}%)
+                            </Typography>
+                            <LinearProgress
+                              variant="determinate"
+                              value={percentage}
+                              sx={{
+                                mt: 1,
+                                backgroundColor: alpha(getCategoryColor(category), 0.2),
+                                '& .MuiLinearProgress-bar': {
+                                  backgroundColor: getCategoryColor(category),
+                                },
+                              }}
+                            />
+                          </Box>
+                        }
+                      />
+                    </ListItem>
+                  );
+                })}
+              </List>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+
+        {/* Recent Expenses */}
+        <Grid item xs={12} md={8}>
           <Card>
             <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Total Transactions
-              </Typography>
-              <Typography variant="h4">
-                {expenses.length}
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6">
+                  Recent Expenses
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={handleOpen}
+                  sx={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                    },
+                  }}
+                >
+                  Add Expense
+                </Button>
+              </Box>
+
+              {/* Filters */}
+              <Grid container spacing={2} sx={{ mb: 3 }}>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    placeholder="Search expenses..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    InputProps={{
+                      startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControl fullWidth>
+                    <InputLabel>Category</InputLabel>
+                    <Select
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      label="Category"
+                    >
+                      <MenuItem value="all">All Categories</MenuItem>
+                      <MenuItem value="Materials">Materials</MenuItem>
+                      <MenuItem value="Labor">Labor</MenuItem>
+                      <MenuItem value="Permits">Permits</MenuItem>
+                      <MenuItem value="Appliances">Appliances</MenuItem>
+                      <MenuItem value="Utilities">Utilities</MenuItem>
+                      <MenuItem value="Marketing">Marketing</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={2}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<FilterIcon />}
+                  >
+                    More Filters
+                  </Button>
+                </Grid>
+              </Grid>
+
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Description</TableCell>
+                      <TableCell>Category</TableCell>
+                      <TableCell>Vendor</TableCell>
+                      <TableCell>Amount</TableCell>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Property</TableCell>
+                      <TableCell align="right">Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredExpenses.map((expense) => (
+                      <TableRow key={expense.id} hover>
+                        <TableCell>
+                          <Box>
+                            <Typography variant="subtitle2" fontWeight={600}>
+                              {expense.description}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {expense.paymentMethod}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={expense.category}
+                            size="small"
+                            sx={{
+                              backgroundColor: alpha(getCategoryColor(expense.category), 0.1),
+                              color: getCategoryColor(expense.category),
+                              fontWeight: 600,
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {expense.vendor}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={600}>
+                            ${expense.amount.toLocaleString()}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {new Date(expense.date).toLocaleDateString()}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {expense.property}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <IconButton
+                            onClick={(e) => handleMenuClick(e, expense)}
+                            size="small"
+                          >
+                            <MoreVertIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Date</TableCell>
-              <TableCell>Property</TableCell>
-              <TableCell>Category</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell>Vendor</TableCell>
-              <TableCell>Amount</TableCell>
-              <TableCell>Payment Method</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {expenses.map((expense) => (
-              <TableRow key={expense._id}>
-                <TableCell>
-                  {new Date(expense.date).toLocaleDateString()}
-                </TableCell>
-                <TableCell>{expense.propertyId.address.fullAddress}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={expense.category}
-                    color={getCategoryColor(expense.category) as any}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>{expense.description}</TableCell>
-                <TableCell>{expense.vendor || 'N/A'}</TableCell>
-                <TableCell>
-                  <Typography fontWeight="bold">
-                    ${expense.amount.toLocaleString()}
-                  </Typography>
-                </TableCell>
-                <TableCell>{expense.paymentMethod}</TableCell>
-                <TableCell>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleOpen(expense)}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleDelete(expense._id)}
-                    color="error"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Add/Edit Expense Dialog */}
+      {/* Add Expense Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle>
           {editingExpense ? 'Edit Expense' : 'Add New Expense'}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Property</InputLabel>
-                  <Select
-                    name="propertyId"
-                    value={formData.propertyId}
-                    onChange={handleSelectChange}
-                    required
-                  >
-                    {properties.map((property) => (
-                      <MenuItem key={property._id} value={property._id}>
-                        {property.address.fullAddress}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+            <Grid container spacing={3} sx={{ mt: 1 }}>
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom>
+                  Expense Details
+                </Typography>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="Date"
-                  name="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={handleChange}
-                  InputLabelProps={{ shrink: true }}
+                  label="Description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   required
                 />
               </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth required>
                   <InputLabel>Category</InputLabel>
                   <Select
-                    name="category"
                     value={formData.category}
-                    onChange={handleSelectChange}
-                    required
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    label="Category"
                   >
-                    <MenuItem value="Acquisition">Acquisition</MenuItem>
-                    <MenuItem value="Rehab">Rehab</MenuItem>
-                    <MenuItem value="Holding">Holding</MenuItem>
-                    <MenuItem value="Selling">Selling</MenuItem>
-                    <MenuItem value="Financing">Financing</MenuItem>
-                    <MenuItem value="Utilities">Utilities</MenuItem>
-                    <MenuItem value="Insurance">Insurance</MenuItem>
-                    <MenuItem value="Taxes">Taxes</MenuItem>
-                    <MenuItem value="Permits">Permits</MenuItem>
                     <MenuItem value="Materials">Materials</MenuItem>
                     <MenuItem value="Labor">Labor</MenuItem>
-                    <MenuItem value="Equipment">Equipment</MenuItem>
+                    <MenuItem value="Permits">Permits</MenuItem>
+                    <MenuItem value="Appliances">Appliances</MenuItem>
+                    <MenuItem value="Utilities">Utilities</MenuItem>
                     <MenuItem value="Marketing">Marketing</MenuItem>
                     <MenuItem value="Other">Other</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="Subcategory (Optional)"
-                  name="subcategory"
-                  value={formData.subcategory}
-                  onChange={handleChange}
-                />
-              </Grid>
-              
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
+                  label="Vendor"
+                  value={formData.vendor}
+                  onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
                   required
                 />
               </Grid>
-              
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Amount"
-                  name="amount"
                   type="number"
                   value={formData.amount}
-                  onChange={handleChange}
+                  onChange={(e) => setFormData({ ...formData, amount: parseInt(e.target.value) || 0 })}
                   required
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="Vendor (Optional)"
-                  name="vendor"
-                  value={formData.vendor}
-                  onChange={handleChange}
+                  label="Date"
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
+                  required
                 />
               </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth required>
                   <InputLabel>Payment Method</InputLabel>
                   <Select
-                    name="paymentMethod"
                     value={formData.paymentMethod}
-                    onChange={handleSelectChange}
+                    onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+                    label="Payment Method"
                   >
                     <MenuItem value="Cash">Cash</MenuItem>
                     <MenuItem value="Check">Check</MenuItem>
                     <MenuItem value="Credit Card">Credit Card</MenuItem>
-                    <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
-                    <MenuItem value="Other">Other</MenuItem>
+                    <MenuItem value="Debit Card">Debit Card</MenuItem>
+                    <MenuItem value="ACH">ACH</MenuItem>
+                    <MenuItem value="Wire">Wire</MenuItem>
                   </Select>
                 </FormControl>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Property</InputLabel>
+                  <Select
+                    value={formData.property}
+                    onChange={(e) => setFormData({ ...formData, property: e.target.value })}
+                    label="Property"
+                  >
+                    <MenuItem value="123 Main St, Austin, TX">123 Main St, Austin, TX</MenuItem>
+                    <MenuItem value="456 Oak Ave, Dallas, TX">456 Oak Ave, Dallas, TX</MenuItem>
+                    <MenuItem value="789 Pine St, Houston, TX">789 Pine St, Houston, TX</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Receipt (Optional)"
+                  value={formData.receipt}
+                  onChange={(e) => setFormData({ ...formData, receipt: e.target.value })}
+                  placeholder="receipt_001.pdf"
+                />
               </Grid>
             </Grid>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose}>Cancel</Button>
             <Button type="submit" variant="contained">
-              {editingExpense ? 'Update' : 'Create'}
+              {editingExpense ? 'Update' : 'Add'} Expense
             </Button>
           </DialogActions>
         </form>
       </Dialog>
-    </Box>
+
+      {/* Action Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+      >
+        <MenuItem onClick={() => {
+          handleMenuClose();
+          // Handle view
+        }}>
+          <ListItemIcon>
+            <ViewIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>View Details</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => {
+          handleMenuClose();
+          selectedExpense && handleEdit(selectedExpense);
+        }}>
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Edit</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => {
+          handleMenuClose();
+          selectedExpense && handleDelete(selectedExpense);
+        }}>
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      {/* Floating Action Button */}
+      <Fab
+        color="primary"
+        aria-label="add"
+        sx={{
+          position: 'fixed',
+          bottom: 16,
+          right: 16,
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        }}
+        onClick={handleOpen}
+      >
+        <AddIcon />
+      </Fab>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
+      >
+        <Alert onClose={() => setSnackbarOpen(false)} severity="success">
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+    </Container>
   );
 };
 

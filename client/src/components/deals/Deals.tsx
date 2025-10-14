@@ -1,128 +1,168 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Button,
+  Container,
   Typography,
-  Paper,
-  Grid,
+  Button,
   Card,
   CardContent,
-  CardActions,
-  Chip,
+  Grid,
+  TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
+  Chip,
   IconButton,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
+  TableRow,
+  Paper,
+  Avatar,
+  Menu,
+  ListItemIcon,
+  ListItemText,
+  Fab,
+  useTheme,
+  alpha,
+  Alert,
+  Snackbar,
+  Divider,
+  LinearProgress,
 } from '@mui/material';
-import type { SelectChangeEvent } from '@mui/material/Select';
 import {
   Add as AddIcon,
+  MoreVert as MoreVertIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Visibility as ViewIcon,
   TrendingUp as TrendingUpIcon,
-  Calculate as CalculateIcon
+  AttachMoney as AttachMoneyIcon,
+  Calculate as CalculateIcon,
+  Home as HomeIcon,
+  Timeline as TimelineIcon,
+  CheckCircle as CheckCircleIcon,
+  Warning as WarningIcon,
 } from '@mui/icons-material';
-import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Deal {
-  _id: string;
-  dealName: string;
-  propertyId: {
-    _id: string;
-    address: { fullAddress: string };
-  };
-  offerPrice: number;
-  estimatedARV: number;
-  totalInvestment: number;
-  estimatedProfit: number;
-  estimatedROI: number;
+  id: string;
+  propertyAddress: string;
   status: string;
+  arv: number;
+  maxOffer: number;
+  margin: number;
+  createdBy: string;
   createdAt: string;
+  financingType: string;
+  purchasePrice: number;
+  repairCost: number;
+  holdingPeriod: number;
+  sellingCosts: number;
+  netProfit: number;
+  roi: number;
 }
 
 const Deals: React.FC = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
-  const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const { user } = useAuth();
+  const theme = useTheme();
+
   const [formData, setFormData] = useState({
-    propertyId: '',
-    dealName: '',
-    offerPrice: 0,
-    closingCosts: 0,
-    holdingCosts: 0,
-    repairCosts: 0,
+    propertyAddress: '',
+    financingType: '',
+    purchasePrice: 0,
+    repairCost: 0,
+    holdingPeriod: 0,
     sellingCosts: 0,
-    estimatedARV: 0,
-    status: 'Analyzing'
+    arv: 0,
   });
 
+  // Mock data for demonstration
   useEffect(() => {
-    fetchDeals();
-    fetchProperties();
+    const mockDeals: Deal[] = [
+      {
+        id: '1',
+        propertyAddress: '123 Main St, Austin, TX',
+        status: 'Approved',
+        arv: 320000,
+        maxOffer: 220000,
+        margin: 100000,
+        createdBy: 'John Smith',
+        createdAt: '2024-01-15',
+        financingType: 'Hard Money',
+        purchasePrice: 220000,
+        repairCost: 45000,
+        holdingPeriod: 6,
+        sellingCosts: 19200,
+        netProfit: 35800,
+        roi: 16.3,
+      },
+      {
+        id: '2',
+        propertyAddress: '456 Oak Ave, Dallas, TX',
+        status: 'Proposed',
+        arv: 280000,
+        maxOffer: 180000,
+        margin: 100000,
+        createdBy: 'Sarah Johnson',
+        createdAt: '2024-02-01',
+        financingType: 'Cash',
+        purchasePrice: 180000,
+        repairCost: 35000,
+        holdingPeriod: 4,
+        sellingCosts: 16800,
+        netProfit: 50200,
+        roi: 27.9,
+      },
+      {
+        id: '3',
+        propertyAddress: '789 Pine St, Houston, TX',
+        status: 'Rejected',
+        arv: 180000,
+        maxOffer: 120000,
+        margin: 60000,
+        createdBy: 'Mike Chen',
+        createdAt: '2024-01-20',
+        financingType: 'Conventional',
+        purchasePrice: 120000,
+        repairCost: 25000,
+        holdingPeriod: 3,
+        sellingCosts: 10800,
+        netProfit: 14200,
+        roi: 11.8,
+      },
+    ];
+    setDeals(mockDeals);
+    setLoading(false);
   }, []);
 
-  const fetchDeals = async () => {
-    try {
-      const response = await axios.get('/api/deals');
-      setDeals(response.data);
-    } catch (error) {
-      console.error('Error fetching deals:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchProperties = async () => {
-    try {
-      const response = await axios.get('/api/properties');
-      setProperties(response.data);
-    } catch (error) {
-      console.error('Error fetching properties:', error);
-    }
-  };
-
-  const handleOpen = (deal?: Deal) => {
-    if (deal) {
-      setEditingDeal(deal);
-      setFormData({
-        propertyId: deal.propertyId._id,
-        dealName: deal.dealName || '',
-        offerPrice: deal.offerPrice,
-        closingCosts: 0,
-        holdingCosts: 0,
-        repairCosts: 0,
-        sellingCosts: 0,
-        estimatedARV: deal.estimatedARV,
-        status: deal.status
-      });
-    } else {
-      setEditingDeal(null);
-      setFormData({
-        propertyId: '',
-        dealName: '',
-        offerPrice: 0,
-        closingCosts: 0,
-        holdingCosts: 0,
-        repairCosts: 0,
-        sellingCosts: 0,
-        estimatedARV: 0,
-        status: 'Analyzing'
-      });
-    }
+  const handleOpen = () => {
+    setEditingDeal(null);
+    setFormData({
+      propertyAddress: '',
+      financingType: '',
+      purchasePrice: 0,
+      repairCost: 0,
+      holdingPeriod: 0,
+      sellingCosts: 0,
+      arv: 0,
+    });
     setOpen(true);
   };
 
@@ -131,302 +171,453 @@ const Deals: React.FC = () => {
     setEditingDeal(null);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name.includes('Price') || name.includes('Costs') || name.includes('ARV') 
-              ? Number(value) : value
-    }));
+  const calculateDeal = () => {
+    const { purchasePrice, repairCost, arv, sellingCosts, holdingPeriod } = formData;
+    
+    // Calculate holding costs (simplified)
+    const holdingCosts = holdingPeriod * 2000; // $2000/month estimated
+    
+    // Calculate total project cost
+    const totalProjectCost = purchasePrice + repairCost + holdingCosts + sellingCosts;
+    
+    // Calculate profit and ROI
+    const grossProfit = arv - totalProjectCost;
+    const netProfit = grossProfit;
+    const roi = (netProfit / totalProjectCost) * 100;
+    const maxOffer = arv - repairCost - holdingCosts - sellingCosts - 20000; // $20k minimum profit
+    
+    return {
+      totalProjectCost,
+      grossProfit,
+      netProfit,
+      roi,
+      maxOffer,
+      margin: arv - maxOffer,
+    };
   };
 
-  const handleSelectChange = (e: SelectChangeEvent<string>) => {
-    const { name, value } = e.target as { name: string; value: string };
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (editingDeal) {
-        await axios.put(`/api/deals/${editingDeal._id}`, formData);
-      } else {
-        await axios.post('/api/deals', formData);
-      }
-      fetchDeals();
-      handleClose();
-    } catch (error) {
-      console.error('Error saving deal:', error);
+    const calculations = calculateDeal();
+    
+    const newDeal: Deal = {
+      id: editingDeal?.id || Date.now().toString(),
+      propertyAddress: formData.propertyAddress,
+      status: 'Proposed',
+      arv: formData.arv,
+      maxOffer: calculations.maxOffer,
+      margin: calculations.margin,
+      createdBy: user?.name || 'Current User',
+      createdAt: editingDeal?.createdAt || new Date().toISOString().split('T')[0],
+      financingType: formData.financingType,
+      purchasePrice: formData.purchasePrice,
+      repairCost: formData.repairCost,
+      holdingPeriod: formData.holdingPeriod,
+      sellingCosts: formData.sellingCosts,
+      netProfit: calculations.netProfit,
+      roi: calculations.roi,
+    };
+
+    if (editingDeal) {
+      setDeals(deals.map(d => d.id === editingDeal.id ? newDeal : d));
+      setSnackbarMessage('Deal updated successfully!');
+    } else {
+      setDeals([...deals, newDeal]);
+      setSnackbarMessage('Deal analysis completed!');
     }
+    setSnackbarOpen(true);
+    handleClose();
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this deal?')) {
-      try {
-        await axios.delete(`/api/deals/${id}`);
-        fetchDeals();
-      } catch (error) {
-        console.error('Error deleting deal:', error);
-      }
-    }
+  const handleEdit = (deal: Deal) => {
+    setEditingDeal(deal);
+    setFormData({
+      propertyAddress: deal.propertyAddress,
+      financingType: deal.financingType,
+      purchasePrice: deal.purchasePrice,
+      repairCost: deal.repairCost,
+      holdingPeriod: deal.holdingPeriod,
+      sellingCosts: deal.sellingCosts,
+      arv: deal.arv,
+    });
+    setOpen(true);
   };
 
-  const handleCalculate = async (id: string) => {
-    try {
-      const deal = deals.find(d => d._id === id);
-      if (deal) {
-        await axios.post(`/api/deals/${id}/calculate`, {
-          offerPrice: formData.offerPrice,
-          closingCosts: formData.closingCosts,
-          holdingCosts: formData.holdingCosts,
-          repairCosts: formData.repairCosts,
-          sellingCosts: formData.sellingCosts,
-          estimatedARV: formData.estimatedARV
-        });
-        fetchDeals();
-      }
-    } catch (error) {
-      console.error('Error calculating deal:', error);
-    }
+  const handleDelete = (deal: Deal) => {
+    setDeals(deals.filter(d => d.id !== deal.id));
+    setSnackbarMessage('Deal deleted successfully!');
+    setSnackbarOpen(true);
+  };
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>, deal: Deal) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedDeal(deal);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedDeal(null);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Completed': return 'success';
-      case 'In Progress': return 'warning';
-      case 'Under Contract': return 'info';
-      case 'Sold': return 'primary';
-      default: return 'default';
+      case 'Approved':
+        return 'success';
+      case 'Proposed':
+        return 'warning';
+      case 'Rejected':
+        return 'error';
+      default:
+        return 'default';
     }
   };
 
-  if (loading) {
-    return <Typography>Loading...</Typography>;
-  }
+  const getROIColor = (roi: number) => {
+    if (roi >= 20) return theme.palette.success.main;
+    if (roi >= 10) return theme.palette.warning.main;
+    return theme.palette.error.main;
+  };
+
+  const stats = [
+    {
+      title: 'Total Deals',
+      value: deals.length,
+      icon: <TrendingUpIcon />,
+      color: theme.palette.primary.main,
+    },
+    {
+      title: 'Approved',
+      value: deals.filter(d => d.status === 'Approved').length,
+      icon: <CheckCircleIcon />,
+      color: theme.palette.success.main,
+    },
+    {
+      title: 'Avg ROI',
+      value: `${(deals.reduce((sum, d) => sum + d.roi, 0) / deals.length || 0).toFixed(1)}%`,
+      icon: <AttachMoneyIcon />,
+      color: theme.palette.warning.main,
+    },
+    {
+      title: 'Total Potential Profit',
+      value: `$${deals.reduce((sum, d) => sum + d.netProfit, 0).toLocaleString()}`,
+      icon: <AttachMoneyIcon />,
+      color: theme.palette.info.main,
+    },
+  ];
+
+  const calculations = calculateDeal();
 
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">
-          Deals
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      {/* Header */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" fontWeight={700} gutterBottom>
+          Deal Analysis
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpen()}
-        >
-          Add Deal
-        </Button>
+        <Typography variant="body1" color="text.secondary">
+          Analyze potential real estate investments and calculate ROI
+        </Typography>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Deal Name</TableCell>
-              <TableCell>Property</TableCell>
-              <TableCell>Offer Price</TableCell>
-              <TableCell>Est. ARV</TableCell>
-              <TableCell>Total Investment</TableCell>
-              <TableCell>Est. Profit</TableCell>
-              <TableCell>ROI</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {deals.map((deal) => (
-              <TableRow key={deal._id}>
-                <TableCell>{deal.dealName || 'Unnamed Deal'}</TableCell>
-                <TableCell>{deal.propertyId.address.fullAddress}</TableCell>
-                <TableCell>${deal.offerPrice.toLocaleString()}</TableCell>
-                <TableCell>${deal.estimatedARV.toLocaleString()}</TableCell>
-                <TableCell>${deal.totalInvestment?.toLocaleString() || 'N/A'}</TableCell>
-                <TableCell>
-                  <Typography
-                    color={deal.estimatedProfit > 0 ? 'success.main' : 'error.main'}
-                    fontWeight="bold"
-                  >
-                    ${deal.estimatedProfit?.toLocaleString() || 'N/A'}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  {deal.estimatedROI ? `${deal.estimatedROI.toFixed(1)}%` : 'N/A'}
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={deal.status}
-                    color={getStatusColor(deal.status) as any}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleOpen(deal)}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleDelete(deal._id)}
-                    color="error"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      {/* Stats Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {stats.map((stat, index) => (
+          <Grid item xs={12} sm={6} md={3} key={index}>
+            <Card
+              sx={{
+                background: `linear-gradient(135deg, ${alpha(stat.color, 0.1)} 0%, ${alpha(stat.color, 0.05)} 100%)`,
+                border: `1px solid ${alpha(stat.color, 0.2)}`,
+              }}
+            >
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Avatar sx={{ backgroundColor: stat.color, mr: 2 }}>
+                    {stat.icon}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h4" fontWeight={700} color={stat.color}>
+                      {stat.value}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {stat.title}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
 
-      {/* Add/Edit Deal Dialog */}
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {editingDeal ? 'Edit Deal' : 'Add New Deal'}
-        </DialogTitle>
-        <form onSubmit={handleSubmit}>
-          <DialogContent>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Property</InputLabel>
-                  <Select
-                    name="propertyId"
-                    value={formData.propertyId}
-                    onChange={handleSelectChange}
-                    required
-                  >
-                    {properties.map((property) => (
-                      <MenuItem key={property._id} value={property._id}>
-                        {property.address.fullAddress}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+      {/* Deal Analysis Form */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Quick Deal Analysis
+          </Typography>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={3}>
+              <TextField
+                fullWidth
+                label="Property Address"
+                value={formData.propertyAddress}
+                onChange={(e) => setFormData({ ...formData, propertyAddress: e.target.value })}
+                placeholder="123 Main St, City, State"
+              />
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <FormControl fullWidth>
+                <InputLabel>Financing</InputLabel>
+                <Select
+                  value={formData.financingType}
+                  onChange={(e) => setFormData({ ...formData, financingType: e.target.value })}
+                  label="Financing"
+                >
+                  <MenuItem value="Cash">Cash</MenuItem>
+                  <MenuItem value="Hard Money">Hard Money</MenuItem>
+                  <MenuItem value="Conventional">Conventional</MenuItem>
+                  <MenuItem value="FHA 203k">FHA 203k</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <TextField
+                fullWidth
+                label="Purchase Price"
+                type="number"
+                value={formData.purchasePrice}
+                onChange={(e) => setFormData({ ...formData, purchasePrice: parseInt(e.target.value) || 0 })}
+              />
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <TextField
+                fullWidth
+                label="Repair Cost"
+                type="number"
+                value={formData.repairCost}
+                onChange={(e) => setFormData({ ...formData, repairCost: parseInt(e.target.value) || 0 })}
+              />
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <TextField
+                fullWidth
+                label="ARV"
+                type="number"
+                value={formData.arv}
+                onChange={(e) => setFormData({ ...formData, arv: parseInt(e.target.value) || 0 })}
+              />
+            </Grid>
+            <Grid item xs={12} md={1}>
+              <Button
+                fullWidth
+                variant="contained"
+                startIcon={<CalculateIcon />}
+                onClick={handleSubmit}
+                disabled={!formData.propertyAddress || !formData.arv}
+                sx={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                  },
+                }}
+              >
+                Analyze
+              </Button>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+
+      {/* Calculation Results */}
+      {formData.arv > 0 && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Analysis Results
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={3}>
+                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha(theme.palette.primary.main, 0.1), borderRadius: 2 }}>
+                  <Typography variant="h4" fontWeight={700} color="primary">
+                    ${calculations.maxOffer.toLocaleString()}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Max Allowable Offer
+                  </Typography>
+                </Box>
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Deal Name (Optional)"
-                  name="dealName"
-                  value={formData.dealName}
-                  onChange={handleChange}
-                />
+              <Grid item xs={12} md={3}>
+                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha(theme.palette.success.main, 0.1), borderRadius: 2 }}>
+                  <Typography variant="h4" fontWeight={700} color="success.main">
+                    ${calculations.netProfit.toLocaleString()}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Net Profit
+                  </Typography>
+                </Box>
               </Grid>
-              
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  Financial Details
-                </Typography>
+              <Grid item xs={12} md={3}>
+                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha(theme.palette.warning.main, 0.1), borderRadius: 2 }}>
+                  <Typography variant="h4" fontWeight={700} color="warning.main">
+                    {calculations.roi.toFixed(1)}%
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    ROI
+                  </Typography>
+                </Box>
               </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Offer Price"
-                  name="offerPrice"
-                  type="number"
-                  value={formData.offerPrice}
-                  onChange={handleChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Estimated ARV"
-                  name="estimatedARV"
-                  type="number"
-                  value={formData.estimatedARV}
-                  onChange={handleChange}
-                  required
-                />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Closing Costs"
-                  name="closingCosts"
-                  type="number"
-                  value={formData.closingCosts}
-                  onChange={handleChange}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Holding Costs"
-                  name="holdingCosts"
-                  type="number"
-                  value={formData.holdingCosts}
-                  onChange={handleChange}
-                />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Repair Costs"
-                  name="repairCosts"
-                  type="number"
-                  value={formData.repairCosts}
-                  onChange={handleChange}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Selling Costs"
-                  name="sellingCosts"
-                  type="number"
-                  value={formData.sellingCosts}
-                  onChange={handleChange}
-                />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Status</InputLabel>
-                  <Select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleSelectChange}
-                  >
-                    <MenuItem value="Analyzing">Analyzing</MenuItem>
-                    <MenuItem value="Under Contract">Under Contract</MenuItem>
-                    <MenuItem value="In Progress">In Progress</MenuItem>
-                    <MenuItem value="Completed">Completed</MenuItem>
-                    <MenuItem value="Sold">Sold</MenuItem>
-                    <MenuItem value="Cancelled">Cancelled</MenuItem>
-                  </Select>
-                </FormControl>
+              <Grid item xs={12} md={3}>
+                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha(theme.palette.info.main, 0.1), borderRadius: 2 }}>
+                  <Typography variant="h4" fontWeight={700} color="info.main">
+                    ${calculations.totalProjectCost.toLocaleString()}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Total Project Cost
+                  </Typography>
+                </Box>
               </Grid>
             </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            {editingDeal && (
-              <Button
-                onClick={() => handleCalculate(editingDeal._id)}
-                startIcon={<CalculateIcon />}
-              >
-                Calculate
-              </Button>
-            )}
-            <Button type="submit" variant="contained">
-              {editingDeal ? 'Update' : 'Create'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-    </Box>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Deals Table */}
+      <Card>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Property</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>ARV</TableCell>
+                <TableCell>Max Offer</TableCell>
+                <TableCell>Margin</TableCell>
+                <TableCell>ROI</TableCell>
+                <TableCell>Created By</TableCell>
+                <TableCell>Created</TableCell>
+                <TableCell align="right">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {deals.map((deal) => (
+                <TableRow key={deal.id} hover>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Avatar sx={{ mr: 2, backgroundColor: theme.palette.primary.main }}>
+                        <HomeIcon />
+                      </Avatar>
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight={600}>
+                          {deal.propertyAddress}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {deal.financingType} • {deal.holdingPeriod} months
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={deal.status}
+                      color={getStatusColor(deal.status) as any}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" fontWeight={600}>
+                      ${deal.arv.toLocaleString()}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" fontWeight={600}>
+                      ${deal.maxOffer.toLocaleString()}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" fontWeight={600}>
+                      ${deal.margin.toLocaleString()}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography
+                      variant="body2"
+                      fontWeight={600}
+                      color={getROIColor(deal.roi)}
+                    >
+                      {deal.roi.toFixed(1)}%
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">
+                      {deal.createdBy}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">
+                      {new Date(deal.createdAt).toLocaleDateString()}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="right">
+                    <IconButton
+                      onClick={(e) => handleMenuClick(e, deal)}
+                      size="small"
+                    >
+                      <MoreVertIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
+
+      {/* Action Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+      >
+        <MenuItem onClick={() => {
+          handleMenuClose();
+          // Handle view
+        }}>
+          <ListItemIcon>
+            <ViewIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>View Details</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => {
+          handleMenuClose();
+          selectedDeal && handleEdit(selectedDeal);
+        }}>
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Edit</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => {
+          handleMenuClose();
+          selectedDeal && handleDelete(selectedDeal);
+        }}>
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
+      >
+        <Alert onClose={() => setSnackbarOpen(false)} severity="success">
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+    </Container>
   );
 };
 

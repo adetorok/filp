@@ -3,502 +3,1039 @@ import {
   Box,
   Container,
   Typography,
-  Grid,
+  Button,
   Card,
   CardContent,
-  CardActions,
-  Button,
-  Chip,
+  Grid,
   TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Tabs,
-  Tab,
+  Chip,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Paper,
   Avatar,
-  Rating,
-  Divider,
+  Menu,
+  ListItemIcon,
+  ListItemText,
+  Fab,
+  useTheme,
+  alpha,
   Alert,
-  CircularProgress,
-  InputAdornment,
-  IconButton,
-  Tooltip
+  Snackbar,
+  Divider,
+  LinearProgress,
+  Rating,
+  Badge,
+  Tabs,
+  Tab,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText as MuiListItemText,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   FilterList as FilterIcon,
   Star as StarIcon,
-  Business as BusinessIcon,
   Verified as VerifiedIcon,
-  Security as SecurityIcon,
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
+  ExpandMore as ExpandMoreIcon,
+  LocationOn as LocationIcon,
+  Business as BusinessIcon,
+  Phone as PhoneIcon,
+  Email as EmailIcon,
+  Work as WorkIcon,
+  Timeline as TimelineIcon,
+  Security as SecurityIcon,
+  Assignment as AssignmentIcon,
   TrendingUp as TrendingUpIcon,
   People as PeopleIcon,
-  Work as WorkIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Contractor {
   id: string;
   name: string;
-  companyName?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
+  company: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
   trades: string[];
-  yearsInBusiness?: number;
-  totalProjects: number;
-  totalValue?: number;
-  businessStartDate?: string;
+  experienceLevel: string;
+  yearsExperience: number;
   overallScore: number;
-  overallGrade: string;
-  hasActiveLicense: boolean;
-  hasActiveInsurance: boolean;
-  experienceScore: number;
-  peerRanking: {
-    rank: number;
-    total: number;
-    percentile: number;
-  };
-  reviewCount: number;
-  projectCount: number;
-  licenses: Array<{
-    number: string;
-    state: string;
-    status: string;
-    adminVerified: boolean;
-    expiresOn?: string;
-  }>;
-  policies: Array<{
-    type: string;
-    insurerName: string;
-    expiresOn?: string;
-  }>;
-  legalEvents: Array<{
-    type: string;
-    severity: string;
-    title: string;
-    filedOn?: string;
-  }>;
+  complianceTier: string;
+  licenses: License[];
+  insurance: Insurance[];
+  legalEvents: LegalEvent[];
+  permits: Permit[];
+  reviews: Review[];
+  availability: string;
+  hourlyRate?: number;
+  serviceAreas: string[];
+  verified: boolean;
+  lastUpdated: string;
 }
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
+interface License {
+  id: string;
+  type: string;
+  number: string;
+  state: string;
+  status: string;
+  issueDate: string;
+  expirationDate: string;
+  verified: boolean;
+  source: string;
 }
 
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
+interface Insurance {
+  id: string;
+  type: string;
+  carrier: string;
+  policyNumber: string;
+  coverageAmount: number;
+  coverageBand: string;
+  effectiveDate: string;
+  expirationDate: string;
+  verified: boolean;
+  source: string;
+}
 
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`contractor-tabpanel-${index}`}
-      aria-labelledby={`contractor-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
-    </div>
-  );
+interface LegalEvent {
+  id: string;
+  type: string;
+  severity: string;
+  date: string;
+  status: string;
+  description: string;
+  source: string;
+}
+
+interface Permit {
+  id: string;
+  city: string;
+  type: string;
+  status: string;
+  filedDate: string;
+  issuedDate?: string;
+  finaledDate?: string;
+  daysOpen: number;
+  inspectionResults: InspectionResult[];
+}
+
+interface InspectionResult {
+  type: string;
+  date: string;
+  outcome: string;
+  notes?: string;
+}
+
+interface Review {
+  id: string;
+  customerName: string;
+  customerOrg: string;
+  rating: number;
+  comment: string;
+  date: string;
+  verified: boolean;
 }
 
 const ContractorMarketplace: React.FC = () => {
-  const navigate = useNavigate();
   const [contractors, setContractors] = useState<Contractor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [tabValue, setTabValue] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState({
-    trade: '',
-    experienceLevel: '',
-    minGrade: 'F',
-    hasLicense: 'all',
-    hasInsurance: 'all',
-    sort: 'score'
+  const [stateFilter, setStateFilter] = useState('all');
+  const [tradeFilter, setTradeFilter] = useState('all');
+  const [experienceFilter, setExperienceFilter] = useState('all');
+  const [scoreFilter, setScoreFilter] = useState(0);
+  const [selectedContractor, setSelectedContractor] = useState<Contractor | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [tabValue, setTabValue] = useState(0);
+  const { user } = useAuth();
+  const theme = useTheme();
+
+  // Mock data with realistic contractor information
+  useEffect(() => {
+    const mockContractors: Contractor[] = [
+      {
+        id: '1',
+        name: 'Mike Johnson',
+        company: 'Johnson Construction LLC',
+        email: 'mike@johnsonconstruction.com',
+        phone: '+1-555-0123',
+        address: '123 Builder St',
+        city: 'Austin',
+        state: 'TX',
+        zip: '78701',
+        trades: ['General Contractor', 'Framing', 'Drywall'],
+        experienceLevel: 'Veteran',
+        yearsExperience: 12,
+        overallScore: 92,
+        complianceTier: 'A',
+        licenses: [
+          {
+            id: '1',
+            type: 'General Contractor',
+            number: 'GC123456',
+            state: 'TX',
+            status: 'Active',
+            issueDate: '2012-03-15',
+            expirationDate: '2025-03-15',
+            verified: true,
+            source: 'Texas Department of Licensing and Regulation',
+          },
+        ],
+        insurance: [
+          {
+            id: '1',
+            type: 'General Liability',
+            carrier: 'State Farm',
+            policyNumber: 'SF789456',
+            coverageAmount: 2000000,
+            coverageBand: '$2M–$5M',
+            effectiveDate: '2024-01-01',
+            expirationDate: '2025-01-01',
+            verified: true,
+            source: 'State Farm Insurance',
+          },
+          {
+            id: '2',
+            type: 'Workers Compensation',
+            carrier: 'Travelers',
+            policyNumber: 'TR456789',
+            coverageAmount: 1000000,
+            coverageBand: '$1M–$2M',
+            effectiveDate: '2024-01-01',
+            expirationDate: '2025-01-01',
+            verified: true,
+            source: 'Travelers Insurance',
+          },
+        ],
+        legalEvents: [],
+        permits: [
+          {
+            id: '1',
+            city: 'Austin',
+            type: 'Building',
+            status: 'Finaled',
+            filedDate: '2024-01-15',
+            issuedDate: '2024-01-20',
+            finaledDate: '2024-03-15',
+            daysOpen: 59,
+            inspectionResults: [
+              { type: 'Rough-Framing', date: '2024-02-10', outcome: 'Pass' },
+              { type: 'Final-Building', date: '2024-03-10', outcome: 'Pass' },
+            ],
+          },
+        ],
+        reviews: [
+          {
+            id: '1',
+            customerName: 'Sarah Wilson',
+            customerOrg: 'Wilson Properties',
+            rating: 5,
+            comment: 'Excellent work quality and communication. Finished on time and within budget.',
+            date: '2024-01-20',
+            verified: true,
+          },
+        ],
+        availability: 'Immediate',
+        hourlyRate: 85,
+        serviceAreas: ['Austin', 'Round Rock', 'Cedar Park'],
+        verified: true,
+        lastUpdated: '2024-02-15',
+      },
+      {
+        id: '2',
+        name: 'Carlos Rodriguez',
+        company: 'Rodriguez Electrical',
+        email: 'carlos@rodriguezelectrical.com',
+        phone: '+1-555-0456',
+        address: '456 Electric Ave',
+        city: 'Dallas',
+        state: 'TX',
+        zip: '75201',
+        trades: ['Electrical', 'Low Voltage'],
+        experienceLevel: 'Experienced',
+        yearsExperience: 8,
+        overallScore: 88,
+        complianceTier: 'A',
+        licenses: [
+          {
+            id: '2',
+            type: 'Electrical Contractor',
+            number: 'EC789012',
+            state: 'TX',
+            status: 'Active',
+            issueDate: '2016-05-20',
+            expirationDate: '2025-05-20',
+            verified: true,
+            source: 'Texas Department of Licensing and Regulation',
+          },
+        ],
+        insurance: [
+          {
+            id: '3',
+            type: 'General Liability',
+            carrier: 'Allstate',
+            policyNumber: 'AL345678',
+            coverageAmount: 1000000,
+            coverageBand: '$1M–$2M',
+            effectiveDate: '2024-01-01',
+            expirationDate: '2025-01-01',
+            verified: true,
+            source: 'Allstate Insurance',
+          },
+        ],
+        legalEvents: [],
+        permits: [
+          {
+            id: '2',
+            city: 'Dallas',
+            type: 'Electrical',
+            status: 'Finaled',
+            filedDate: '2024-02-01',
+            issuedDate: '2024-02-05',
+            finaledDate: '2024-02-28',
+            daysOpen: 27,
+            inspectionResults: [
+              { type: 'Rough-Electrical', date: '2024-02-15', outcome: 'Pass' },
+              { type: 'Final-Electrical', date: '2024-02-25', outcome: 'Pass' },
+            ],
+          },
+        ],
+        reviews: [
+          {
+            id: '2',
+            customerName: 'John Smith',
+            customerOrg: 'Smith Investments',
+            rating: 5,
+            comment: 'Professional and knowledgeable. Great attention to detail.',
+            date: '2024-02-10',
+            verified: true,
+          },
+        ],
+        availability: '<2 weeks',
+        hourlyRate: 75,
+        serviceAreas: ['Dallas', 'Plano', 'Frisco'],
+        verified: true,
+        lastUpdated: '2024-02-10',
+      },
+      {
+        id: '3',
+        name: 'David Chen',
+        company: 'Chen Plumbing & HVAC',
+        email: 'david@chenplumbing.com',
+        phone: '+1-555-0789',
+        address: '789 Service Blvd',
+        city: 'Houston',
+        state: 'TX',
+        zip: '77001',
+        trades: ['Plumbing', 'HVAC'],
+        experienceLevel: 'Developing',
+        yearsExperience: 4,
+        overallScore: 76,
+        complianceTier: 'B',
+        licenses: [
+          {
+            id: '3',
+            type: 'Plumbing Contractor',
+            number: 'PC456789',
+            state: 'TX',
+            status: 'Active',
+            issueDate: '2020-08-10',
+            expirationDate: '2025-08-10',
+            verified: true,
+            source: 'Texas State Board of Plumbing Examiners',
+          },
+        ],
+        insurance: [
+          {
+            id: '4',
+            type: 'General Liability',
+            carrier: 'Progressive',
+            policyNumber: 'PR567890',
+            coverageAmount: 500000,
+            coverageBand: '<$500k',
+            effectiveDate: '2024-01-01',
+            expirationDate: '2025-01-01',
+            verified: true,
+            source: 'Progressive Insurance',
+          },
+        ],
+        legalEvents: [
+          {
+            id: '1',
+            type: 'Violation',
+            severity: 'Minor',
+            date: '2023-06-15',
+            status: 'Resolved',
+            description: 'Minor code violation - corrected same day',
+            source: 'Houston Building Department',
+          },
+        ],
+        permits: [
+          {
+            id: '3',
+            city: 'Houston',
+            type: 'Plumbing',
+            status: 'Finaled',
+            filedDate: '2024-01-20',
+            issuedDate: '2024-01-25',
+            finaledDate: '2024-02-15',
+            daysOpen: 26,
+            inspectionResults: [
+              { type: 'Rough-Plumbing', date: '2024-02-05', outcome: 'Pass' },
+              { type: 'Final-Plumbing', date: '2024-02-12', outcome: 'Pass' },
+            ],
+          },
+        ],
+        reviews: [
+          {
+            id: '3',
+            customerName: 'Emily Davis',
+            customerOrg: 'Davis Realty',
+            rating: 4,
+            comment: 'Good work but had some scheduling issues.',
+            date: '2024-01-25',
+            verified: true,
+          },
+        ],
+        availability: '<1 month',
+        hourlyRate: 65,
+        serviceAreas: ['Houston', 'Sugar Land', 'Katy'],
+        verified: true,
+        lastUpdated: '2024-01-30',
+      },
+    ];
+    setContractors(mockContractors);
+    setLoading(false);
+  }, []);
+
+  const handleSearch = () => {
+    // In a real app, this would make an API call
+    console.log('Searching contractors...', { searchTerm, stateFilter, tradeFilter, experienceFilter, scoreFilter });
+  };
+
+  const handleContractorClick = (contractor: Contractor) => {
+    setSelectedContractor(contractor);
+    setDetailOpen(true);
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 90) return theme.palette.success.main;
+    if (score >= 80) return theme.palette.warning.main;
+    if (score >= 70) return theme.palette.error.main;
+    return theme.palette.grey[500];
+  };
+
+  const getComplianceColor = (tier: string) => {
+    switch (tier) {
+      case 'A': return theme.palette.success.main;
+      case 'B': return theme.palette.warning.main;
+      case 'C': return theme.palette.error.main;
+      default: return theme.palette.grey[500];
+    }
+  };
+
+  const filteredContractors = contractors.filter(contractor => {
+    const matchesSearch = contractor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         contractor.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         contractor.trades.some(trade => trade.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesState = stateFilter === 'all' || contractor.state === stateFilter;
+    const matchesTrade = tradeFilter === 'all' || contractor.trades.includes(tradeFilter);
+    const matchesExperience = experienceFilter === 'all' || contractor.experienceLevel === experienceFilter;
+    const matchesScore = contractor.overallScore >= scoreFilter;
+    return matchesSearch && matchesState && matchesTrade && matchesExperience && matchesScore;
   });
 
-  const experienceLevels = [
-    { value: '', label: 'All Experience Levels' },
-    { value: '1-3', label: '1-3 Years (New)' },
-    { value: '3-6', label: '3-6 Years (Developing)' },
-    { value: '6-10', label: '6-10 Years (Experienced)' },
-    { value: '10+', label: '10+ Years (Veteran)' }
+  const stats = [
+    {
+      title: 'Total Contractors',
+      value: contractors.length,
+      icon: <PeopleIcon />,
+      color: theme.palette.primary.main,
+    },
+    {
+      title: 'Verified',
+      value: contractors.filter(c => c.verified).length,
+      icon: <VerifiedIcon />,
+      color: theme.palette.success.main,
+    },
+    {
+      title: 'Avg Score',
+      value: Math.round(contractors.reduce((sum, c) => sum + c.overallScore, 0) / contractors.length || 0),
+      icon: <StarIcon />,
+      color: theme.palette.warning.main,
+    },
+    {
+      title: 'Tier A',
+      value: contractors.filter(c => c.complianceTier === 'A').length,
+      icon: <CheckCircleIcon />,
+      color: theme.palette.info.main,
+    },
   ];
-
-  const trades = [
-    'GENERAL', 'GC', 'PLUMBING', 'ELECTRICAL', 'HVAC', 
-    'ROOFING', 'PAINTING', 'FLOORING', 'OTHER'
-  ];
-
-  const grades = ['A', 'B', 'C', 'D', 'F'];
-
-  useEffect(() => {
-    fetchContractors();
-  }, [filters]);
-
-  const fetchContractors = async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value && value !== 'all') {
-          params.append(key, value);
-        }
-      });
-
-      const response = await fetch(`/api/contractor-marketplace/search?${params}`);
-      const data = await response.json();
-      
-      if (response.ok) {
-        setContractors(data.contractors);
-      } else {
-        setError(data.message || 'Failed to fetch contractors');
-      }
-    } catch (err) {
-      setError('Network error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-    const experienceLevels = ['', '1-3', '3-6', '6-10', '10+'];
-    setFilters(prev => ({
-      ...prev,
-      experienceLevel: experienceLevels[newValue]
-    }));
-  };
-
-  const handleFilterChange = (field: string, value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const getGradeColor = (grade: string) => {
-    switch (grade) {
-      case 'A': return 'success';
-      case 'B': return 'info';
-      case 'C': return 'warning';
-      case 'D': return 'error';
-      case 'F': return 'error';
-      default: return 'default';
-    }
-  };
-
-  const getExperienceLevelColor = (level: string) => {
-    switch (level) {
-      case '1-3': return 'error';
-      case '3-6': return 'warning';
-      case '6-10': return 'info';
-      case '10+': return 'success';
-      default: return 'default';
-    }
-  };
-
-  const renderContractorCard = (contractor: Contractor) => {
-    const experienceLevel = contractor.yearsInBusiness 
-      ? contractor.yearsInBusiness <= 3 ? '1-3'
-        : contractor.yearsInBusiness <= 6 ? '3-6'
-        : contractor.yearsInBusiness <= 10 ? '6-10'
-        : '10+'
-      : '1-3';
-
-    return (
-      <Card key={contractor.id} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <CardContent sx={{ flexGrow: 1 }}>
-          <Box display="flex" alignItems="center" mb={2}>
-            <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
-              {contractor.name.charAt(0)}
-            </Avatar>
-            <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="h6" noWrap>
-                {contractor.name}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {contractor.companyName || 'Independent Contractor'}
-              </Typography>
-            </Box>
-            <Chip
-              label={`Grade: ${contractor.overallGrade}`}
-              color={getGradeColor(contractor.overallGrade) as any}
-              size="small"
-            />
-          </Box>
-
-          {/* Experience Level Badge */}
-          <Chip
-            icon={<BusinessIcon />}
-            label={`${experienceLevel} Years`}
-            color={getExperienceLevelColor(experienceLevel) as any}
-            size="small"
-            sx={{ mb: 2 }}
-          />
-
-          {/* Key Metrics */}
-          <Grid container spacing={1} sx={{ mb: 2 }}>
-            <Grid item xs={6}>
-              <Box textAlign="center">
-                <Typography variant="h6" color="primary">
-                  {contractor.overallScore}%
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Overall Score
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={6}>
-              <Box textAlign="center">
-                <Typography variant="h6" color="secondary">
-                  #{contractor.peerRanking.rank}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  of {contractor.peerRanking.total} peers
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
-
-          {/* Status Badges */}
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-            {contractor.hasActiveLicense ? (
-              <Chip icon={<VerifiedIcon />} label="Licensed" color="success" size="small" />
-            ) : (
-              <Chip icon={<CancelIcon />} label="No License" color="error" size="small" />
-            )}
-            
-            {contractor.hasActiveInsurance ? (
-              <Chip icon={<SecurityIcon />} label="Insured" color="success" size="small" />
-            ) : (
-              <Chip icon={<WarningIcon />} label="No Insurance" color="warning" size="small" />
-            )}
-          </Box>
-
-          {/* Stats */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-            <Box textAlign="center">
-              <Typography variant="body2" fontWeight="bold">
-                {contractor.projectCount}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Projects
-              </Typography>
-            </Box>
-            <Box textAlign="center">
-              <Typography variant="body2" fontWeight="bold">
-                {contractor.reviewCount}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Reviews
-              </Typography>
-            </Box>
-            <Box textAlign="center">
-              <Typography variant="body2" fontWeight="bold">
-                {contractor.peerRanking.percentile}%
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Percentile
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Trades */}
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="caption" color="text.secondary" display="block">
-              Specialties:
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-              {contractor.trades.slice(0, 3).map((trade, index) => (
-                <Chip key={index} label={trade} size="small" variant="outlined" />
-              ))}
-              {contractor.trades.length > 3 && (
-                <Chip label={`+${contractor.trades.length - 3}`} size="small" variant="outlined" />
-              )}
-            </Box>
-          </Box>
-
-          {/* Location */}
-          {(contractor.city || contractor.state) && (
-            <Typography variant="body2" color="text.secondary">
-              📍 {[contractor.city, contractor.state].filter(Boolean).join(', ')}
-            </Typography>
-          )}
-        </CardContent>
-
-        <CardActions>
-          <Button 
-            size="small" 
-            onClick={() => navigate(`/contractors/${contractor.id}`)}
-          >
-            View Details
-          </Button>
-          <Button 
-            size="small" 
-            variant="outlined"
-            onClick={() => navigate(`/contractors/${contractor.id}/reviews`)}
-          >
-            Reviews
-          </Button>
-        </CardActions>
-      </Card>
-    );
-  };
-
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
-    );
-  }
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-        🏗️ Contractor Marketplace
-      </Typography>
-      <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
-        Find and compare verified contractors by experience level and performance
-      </Typography>
+      {/* Header */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" fontWeight={700} gutterBottom>
+          Contractor Marketplace
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Find and verify contractors with comprehensive background checks
+        </Typography>
+      </Box>
+
+      {/* Stats Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {stats.map((stat, index) => (
+          <Grid item xs={12} sm={6} md={3} key={index}>
+            <Card
+              sx={{
+                background: `linear-gradient(135deg, ${alpha(stat.color, 0.1)} 0%, ${alpha(stat.color, 0.05)} 100%)`,
+                border: `1px solid ${alpha(stat.color, 0.2)}`,
+              }}
+            >
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Avatar sx={{ backgroundColor: stat.color, mr: 2 }}>
+                    {stat.icon}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h4" fontWeight={700} color={stat.color}>
+                      {stat.value}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {stat.title}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
 
       {/* Search and Filters */}
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              placeholder="Search contractors..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={3}>
+              <TextField
+                fullWidth
+                placeholder="Search contractors..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <FormControl fullWidth>
+                <InputLabel>State</InputLabel>
+                <Select
+                  value={stateFilter}
+                  onChange={(e) => setStateFilter(e.target.value)}
+                  label="State"
+                >
+                  <MenuItem value="all">All States</MenuItem>
+                  <MenuItem value="TX">Texas</MenuItem>
+                  <MenuItem value="CA">California</MenuItem>
+                  <MenuItem value="FL">Florida</MenuItem>
+                  <MenuItem value="NY">New York</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <FormControl fullWidth>
+                <InputLabel>Trade</InputLabel>
+                <Select
+                  value={tradeFilter}
+                  onChange={(e) => setTradeFilter(e.target.value)}
+                  label="Trade"
+                >
+                  <MenuItem value="all">All Trades</MenuItem>
+                  <MenuItem value="General Contractor">General Contractor</MenuItem>
+                  <MenuItem value="Electrical">Electrical</MenuItem>
+                  <MenuItem value="Plumbing">Plumbing</MenuItem>
+                  <MenuItem value="HVAC">HVAC</MenuItem>
+                  <MenuItem value="Framing">Framing</MenuItem>
+                  <MenuItem value="Drywall">Drywall</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <FormControl fullWidth>
+                <InputLabel>Experience</InputLabel>
+                <Select
+                  value={experienceFilter}
+                  onChange={(e) => setExperienceFilter(e.target.value)}
+                  label="Experience"
+                >
+                  <MenuItem value="all">All Levels</MenuItem>
+                  <MenuItem value="New">New (1-3 years)</MenuItem>
+                  <MenuItem value="Developing">Developing (3-6 years)</MenuItem>
+                  <MenuItem value="Experienced">Experienced (6-10 years)</MenuItem>
+                  <MenuItem value="Veteran">Veteran (10+ years)</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <TextField
+                fullWidth
+                label="Min Score"
+                type="number"
+                value={scoreFilter}
+                onChange={(e) => setScoreFilter(parseInt(e.target.value) || 0)}
+                inputProps={{ min: 0, max: 100 }}
+              />
+            </Grid>
+            <Grid item xs={12} md={1}>
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={handleSearch}
+                sx={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                  },
+                }}
+              >
+                Search
+              </Button>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+
+      {/* Contractors Grid */}
+      <Grid container spacing={3}>
+        {filteredContractors.map((contractor) => (
+          <Grid item xs={12} md={6} lg={4} key={contractor.id}>
+            <Card
+              sx={{
+                height: '100%',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: `0 8px 25px ${alpha(theme.palette.primary.main, 0.15)}`,
+                },
               }}
-            />
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>Trade</InputLabel>
-              <Select
-                value={filters.trade}
-                onChange={(e) => handleFilterChange('trade', e.target.value)}
-                label="Trade"
-              >
-                <MenuItem value="">All Trades</MenuItem>
-                {trades.map(trade => (
-                  <MenuItem key={trade} value={trade}>{trade}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>Min Grade</InputLabel>
-              <Select
-                value={filters.minGrade}
-                onChange={(e) => handleFilterChange('minGrade', e.target.value)}
-                label="Min Grade"
-              >
-                {grades.map(grade => (
-                  <MenuItem key={grade} value={grade}>Grade {grade}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>License</InputLabel>
-              <Select
-                value={filters.hasLicense}
-                onChange={(e) => handleFilterChange('hasLicense', e.target.value)}
-                label="License"
-              >
-                <MenuItem value="all">All</MenuItem>
-                <MenuItem value="true">Licensed Only</MenuItem>
-                <MenuItem value="false">No License</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>Sort By</InputLabel>
-              <Select
-                value={filters.sort}
-                onChange={(e) => handleFilterChange('sort', e.target.value)}
-                label="Sort By"
-              >
-                <MenuItem value="score">Overall Score</MenuItem>
-                <MenuItem value="experience">Experience</MenuItem>
-                <MenuItem value="reviews">Reviews</MenuItem>
-                <MenuItem value="projects">Projects</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-      </Paper>
+              onClick={() => handleContractorClick(contractor)}
+            >
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Avatar
+                    sx={{
+                      width: 60,
+                      height: 60,
+                      mr: 2,
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    }}
+                  >
+                    {contractor.name.split(' ').map(n => n[0]).join('')}
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6" fontWeight={600} gutterBottom>
+                      {contractor.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {contractor.company}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                      <LocationIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
+                      <Typography variant="caption" color="text.secondary">
+                        {contractor.city}, {contractor.state}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  {contractor.verified && (
+                    <VerifiedIcon sx={{ color: theme.palette.success.main }} />
+                  )}
+                </Box>
 
-      {/* Experience Level Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="experience level tabs">
-          <Tab label="All Contractors" />
-          <Tab label="1-3 Years (New)" />
-          <Tab label="3-6 Years (Developing)" />
-          <Tab label="6-10 Years (Experienced)" />
-          <Tab label="10+ Years (Veteran)" />
-        </Tabs>
-      </Box>
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Trades
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {contractor.trades.slice(0, 3).map((trade, index) => (
+                      <Chip
+                        key={index}
+                        label={trade}
+                        size="small"
+                        sx={{
+                          backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                          color: theme.palette.primary.main,
+                          fontSize: '0.75rem',
+                        }}
+                      />
+                    ))}
+                    {contractor.trades.length > 3 && (
+                      <Chip
+                        label={`+${contractor.trades.length - 3} more`}
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontSize: '0.75rem' }}
+                      />
+                    )}
+                  </Box>
+                </Box>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Overall Score
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      fontWeight={700}
+                      color={getScoreColor(contractor.overallScore)}
+                    >
+                      {contractor.overallScore}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Compliance
+                    </Typography>
+                    <Chip
+                      label={`Tier ${contractor.complianceTier}`}
+                      size="small"
+                      sx={{
+                        backgroundColor: alpha(getComplianceColor(contractor.complianceTier), 0.1),
+                        color: getComplianceColor(contractor.complianceTier),
+                        fontWeight: 600,
+                      }}
+                    />
+                  </Box>
+                </Box>
 
-      {/* Results */}
-      <Box>
-        <Typography variant="h6" gutterBottom>
-          {contractors.length} Contractors Found
-        </Typography>
-        
-        {contractors.length === 0 ? (
-          <Paper sx={{ p: 4, textAlign: 'center' }}>
-            <Typography variant="h6" color="text.secondary">
-              No contractors found matching your criteria
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Try adjusting your filters or search terms
-            </Typography>
-          </Paper>
-        ) : (
-          <Grid container spacing={3}>
-            {contractors.map(contractor => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={contractor.id}>
-                {renderContractorCard(contractor)}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Experience
+                    </Typography>
+                    <Typography variant="body2" fontWeight={600}>
+                      {contractor.yearsExperience} years
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Availability
+                    </Typography>
+                    <Typography variant="body2" fontWeight={600}>
+                      {contractor.availability}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Divider sx={{ my: 2 }} />
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Rating value={contractor.reviews.reduce((sum, r) => sum + r.rating, 0) / contractor.reviews.length || 0} readOnly size="small" />
+                    <Typography variant="body2" sx={{ ml: 1 }}>
+                      ({contractor.reviews.length} reviews)
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" fontWeight={600}>
+                    ${contractor.hourlyRate}/hr
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Contractor Detail Dialog */}
+      <Dialog open={detailOpen} onClose={() => setDetailOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Avatar sx={{ mr: 2, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+              {selectedContractor?.name.split(' ').map(n => n[0]).join('')}
+            </Avatar>
+            <Box>
+              <Typography variant="h6" fontWeight={600}>
+                {selectedContractor?.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {selectedContractor?.company}
+              </Typography>
+            </Box>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} sx={{ mb: 3 }}>
+            <Tab label="Overview" />
+            <Tab label="Verification" />
+            <Tab label="Performance" />
+            <Tab label="Reviews" />
+          </Tabs>
+
+          {tabValue === 0 && selectedContractor && (
+            <Box>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="h6" gutterBottom>
+                    Contact Information
+                  </Typography>
+                  <List>
+                    <ListItem sx={{ px: 0 }}>
+                      <ListItemIcon>
+                        <EmailIcon />
+                      </ListItemIcon>
+                      <ListItemText primary={selectedContractor.email} />
+                    </ListItem>
+                    <ListItem sx={{ px: 0 }}>
+                      <ListItemIcon>
+                        <PhoneIcon />
+                      </ListItemIcon>
+                      <ListItemText primary={selectedContractor.phone} />
+                    </ListItem>
+                    <ListItem sx={{ px: 0 }}>
+                      <ListItemIcon>
+                        <LocationIcon />
+                      </ListItemIcon>
+                      <ListItemText primary={`${selectedContractor.address}, ${selectedContractor.city}, ${selectedContractor.state} ${selectedContractor.zip}`} />
+                    </ListItem>
+                  </List>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="h6" gutterBottom>
+                    Service Details
+                  </Typography>
+                  <List>
+                    <ListItem sx={{ px: 0 }}>
+                      <ListItemIcon>
+                        <WorkIcon />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary="Trades" 
+                        secondary={selectedContractor.trades.join(', ')} 
+                      />
+                    </ListItem>
+                    <ListItem sx={{ px: 0 }}>
+                      <ListItemIcon>
+                        <TimelineIcon />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary="Experience" 
+                        secondary={`${selectedContractor.yearsExperience} years (${selectedContractor.experienceLevel})`} 
+                      />
+                    </ListItem>
+                    <ListItem sx={{ px: 0 }}>
+                      <ListItemIcon>
+                        <BusinessIcon />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary="Service Areas" 
+                        secondary={selectedContractor.serviceAreas.join(', ')} 
+                      />
+                    </ListItem>
+                  </List>
+                </Grid>
               </Grid>
-            ))}
-          </Grid>
-        )}
-      </Box>
+            </Box>
+          )}
+
+          {tabValue === 1 && selectedContractor && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Licenses
+              </Typography>
+              {selectedContractor.licenses.map((license) => (
+                <Accordion key={license.id}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                      <Typography variant="subtitle1" sx={{ flex: 1 }}>
+                        {license.type} - {license.number}
+                      </Typography>
+                      <Chip
+                        label={license.status}
+                        color={license.status === 'Active' ? 'success' : 'error'}
+                        size="small"
+                        sx={{ mr: 2 }}
+                      />
+                      {license.verified && <VerifiedIcon sx={{ color: 'success.main' }} />}
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Grid container spacing={2}>
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">
+                          State: {license.state}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Issue Date: {new Date(license.issueDate).toLocaleDateString()}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">
+                          Expiration: {new Date(license.expirationDate).toLocaleDateString()}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Source: {license.source}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+
+              <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+                Insurance
+              </Typography>
+              {selectedContractor.insurance.map((insurance) => (
+                <Accordion key={insurance.id}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                      <Typography variant="subtitle1" sx={{ flex: 1 }}>
+                        {insurance.type} - {insurance.carrier}
+                      </Typography>
+                      <Chip
+                        label={insurance.coverageBand}
+                        color="primary"
+                        size="small"
+                        sx={{ mr: 2 }}
+                      />
+                      {insurance.verified && <VerifiedIcon sx={{ color: 'success.main' }} />}
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Grid container spacing={2}>
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">
+                          Policy: {insurance.policyNumber}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Coverage: ${insurance.coverageAmount.toLocaleString()}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">
+                          Effective: {new Date(insurance.effectiveDate).toLocaleDateString()}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Expires: {new Date(insurance.expirationDate).toLocaleDateString()}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+            </Box>
+          )}
+
+          {tabValue === 2 && selectedContractor && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Performance Metrics
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={4}>
+                  <Card>
+                    <CardContent sx={{ textAlign: 'center' }}>
+                      <Typography variant="h3" fontWeight={700} color="primary">
+                        {selectedContractor.overallScore}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Overall Score
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Card>
+                    <CardContent sx={{ textAlign: 'center' }}>
+                      <Typography variant="h3" fontWeight={700} color="success.main">
+                        {selectedContractor.permits.filter(p => p.status === 'Finaled').length}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Completed Permits
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Card>
+                    <CardContent sx={{ textAlign: 'center' }}>
+                      <Typography variant="h3" fontWeight={700} color="warning.main">
+                        {Math.round(selectedContractor.permits.reduce((sum, p) => sum + p.daysOpen, 0) / selectedContractor.permits.length || 0)}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Avg Days per Permit
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </Box>
+          )}
+
+          {tabValue === 3 && selectedContractor && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Customer Reviews
+              </Typography>
+              {selectedContractor.reviews.map((review) => (
+                <Card key={review.id} sx={{ mb: 2 }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        {review.customerName}
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Rating value={review.rating} readOnly size="small" />
+                        {review.verified && <VerifiedIcon sx={{ ml: 1, color: 'success.main', fontSize: 16 }} />}
+                      </Box>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      {review.customerOrg} • {new Date(review.date).toLocaleDateString()}
+                    </Typography>
+                    <Typography variant="body2">
+                      {review.comment}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDetailOpen(false)}>Close</Button>
+          <Button variant="contained">
+            Invite to Bid
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

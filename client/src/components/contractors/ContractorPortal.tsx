@@ -3,750 +3,912 @@ import {
   Box,
   Container,
   Typography,
-  Grid,
+  Button,
   Card,
   CardContent,
-  Paper,
-  Button,
-  Chip,
+  Grid,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Tabs,
-  Tab,
-  Alert,
-  CircularProgress,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Avatar,
+  useTheme,
+  alpha,
+  Alert,
+  Snackbar,
+  Divider,
+  LinearProgress,
+  Rating,
+  Tabs,
+  Tab,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
   Stepper,
   Step,
   StepLabel,
-  LinearProgress,
-  Rating
+  StepContent,
 } from '@mui/material';
 import {
-  Dashboard as DashboardIcon,
-  TrendingUp as TrendingUpIcon,
-  People as PeopleIcon,
-  Work as WorkIcon,
-  Star as StarIcon,
-  Business as BusinessIcon,
-  Verified as VerifiedIcon,
-  Security as SecurityIcon,
-  Warning as WarningIcon,
-  CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon,
-  Gavel as GavelIcon,
   Edit as EditIcon,
   Save as SaveIcon,
-  Add as AddIcon
+  Refresh as RefreshIcon,
+  TrendingUp as TrendingUpIcon,
+  Warning as WarningIcon,
+  CheckCircle as CheckCircleIcon,
+  ExpandMore as ExpandMoreIcon,
+  Business as BusinessIcon,
+  Security as SecurityIcon,
+  Assignment as AssignmentIcon,
+  Timeline as TimelineIcon,
+  Star as StarIcon,
+  People as PeopleIcon,
+  AttachMoney as AttachMoneyIcon,
+  LocationOn as LocationIcon,
+  Phone as PhoneIcon,
+  Email as EmailIcon,
+  Work as WorkIcon,
+  Verified as VerifiedIcon,
+  Schedule as ScheduleIcon,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
-interface Contractor {
+interface ContractorProfile {
   id: string;
   name: string;
-  companyName?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
+  company: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
   trades: string[];
-  yearsInBusiness?: number;
-  totalProjects: number;
-  totalValue?: number;
-  businessStartDate?: string;
+  experienceLevel: string;
+  yearsExperience: number;
   overallScore: number;
-  overallGrade: string;
-  hasActiveLicense: boolean;
-  hasActiveInsurance: boolean;
-  experienceScore: number;
-  peerRanking: {
-    rank: number;
-    total: number;
-    percentile: number;
-  };
-  reviewCount: number;
-  projectCount: number;
-  licenses: Array<{
-    number: string;
-    state: string;
-    status: string;
-    adminVerified: boolean;
-    expiresOn?: string;
-  }>;
-  policies: Array<{
-    type: string;
-    insurerName: string;
-    expiresOn?: string;
-  }>;
-  legalEvents: Array<{
-    type: string;
-    severity: string;
-    title: string;
-    filedOn?: string;
-  }>;
-  reviews: Array<{
-    id: string;
-    stars: number;
-    comment?: string;
-    createdAt: string;
-    project?: {
-      title: string;
-    };
-  }>;
-  challenges: Array<{
-    id: string;
-    challengeType: string;
-    description: string;
-    status: string;
-    createdAt: string;
-    adminNotes?: string;
-  }>;
-  membership?: {
-    membershipType: string;
-    status: string;
-    endDate?: string;
-  };
+  complianceTier: string;
+  licenses: License[];
+  insurance: Insurance[];
+  legalEvents: LegalEvent[];
+  permits: Permit[];
+  reviews: Review[];
+  availability: string;
+  hourlyRate?: number;
+  serviceAreas: string[];
+  verified: boolean;
+  lastUpdated: string;
+  challengeStatus?: string;
+  challengeReason?: string;
 }
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
+interface License {
+  id: string;
+  type: string;
+  number: string;
+  state: string;
+  status: string;
+  issueDate: string;
+  expirationDate: string;
+  verified: boolean;
+  source: string;
 }
 
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
+interface Insurance {
+  id: string;
+  type: string;
+  carrier: string;
+  policyNumber: string;
+  coverageAmount: number;
+  coverageBand: string;
+  effectiveDate: string;
+  expirationDate: string;
+  verified: boolean;
+  source: string;
+}
 
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`portal-tabpanel-${index}`}
-      aria-labelledby={`portal-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
-    </div>
-  );
+interface LegalEvent {
+  id: string;
+  type: string;
+  severity: string;
+  date: string;
+  status: string;
+  description: string;
+  source: string;
+}
+
+interface Permit {
+  id: string;
+  city: string;
+  type: string;
+  status: string;
+  filedDate: string;
+  issuedDate?: string;
+  finaledDate?: string;
+  daysOpen: number;
+  inspectionResults: InspectionResult[];
+}
+
+interface InspectionResult {
+  type: string;
+  date: string;
+  outcome: string;
+  notes?: string;
+}
+
+interface Review {
+  id: string;
+  customerName: string;
+  customerOrg: string;
+  rating: number;
+  comment: string;
+  date: string;
+  verified: boolean;
 }
 
 const ContractorPortal: React.FC = () => {
-  const navigate = useNavigate();
-  const [contractor, setContractor] = useState<Contractor | null>(null);
+  const [profile, setProfile] = useState<ContractorProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [tabValue, setTabValue] = useState(0);
   const [editing, setEditing] = useState(false);
-  const [challengeDialog, setChallengeDialog] = useState(false);
-  const [challengeForm, setChallengeForm] = useState({
-    challengeType: '',
-    description: '',
-    evidence: ''
+  const [tabValue, setTabValue] = useState(0);
+  const [challengeOpen, setChallengeOpen] = useState(false);
+  const [challengeReason, setChallengeReason] = useState('');
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const { user } = useAuth();
+  const theme = useTheme();
+
+  const [formData, setFormData] = useState({
+    name: '',
+    company: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zip: '',
+    trades: [] as string[],
+    yearsExperience: 0,
+    hourlyRate: 0,
+    serviceAreas: [] as string[],
+    availability: '',
   });
 
-  const challengeTypes = [
-    'RANKING_DISPUTE',
-    'REVIEW_DISPUTE',
-    'LICENSE_UPDATE',
-    'INSURANCE_UPDATE',
-    'LEGAL_EVENT_DISPUTE',
-    'OTHER'
-  ];
-
+  // Mock data for demonstration
   useEffect(() => {
-    fetchDashboardData();
+    const mockProfile: ContractorProfile = {
+      id: '1',
+      name: 'Mike Johnson',
+      company: 'Johnson Construction LLC',
+      email: 'mike@johnsonconstruction.com',
+      phone: '+1-555-0123',
+      address: '123 Builder St',
+      city: 'Austin',
+      state: 'TX',
+      zip: '78701',
+      trades: ['General Contractor', 'Framing', 'Drywall'],
+      experienceLevel: 'Veteran',
+      yearsExperience: 12,
+      overallScore: 92,
+      complianceTier: 'A',
+      licenses: [
+        {
+          id: '1',
+          type: 'General Contractor',
+          number: 'GC123456',
+          state: 'TX',
+          status: 'Active',
+          issueDate: '2012-03-15',
+          expirationDate: '2025-03-15',
+          verified: true,
+          source: 'Texas Department of Licensing and Regulation',
+        },
+      ],
+      insurance: [
+        {
+          id: '1',
+          type: 'General Liability',
+          carrier: 'State Farm',
+          policyNumber: 'SF789456',
+          coverageAmount: 2000000,
+          coverageBand: '$2M–$5M',
+          effectiveDate: '2024-01-01',
+          expirationDate: '2025-01-01',
+          verified: true,
+          source: 'State Farm Insurance',
+        },
+      ],
+      legalEvents: [],
+      permits: [
+        {
+          id: '1',
+          city: 'Austin',
+          type: 'Building',
+          status: 'Finaled',
+          filedDate: '2024-01-15',
+          issuedDate: '2024-01-20',
+          finaledDate: '2024-03-15',
+          daysOpen: 59,
+          inspectionResults: [
+            { type: 'Rough-Framing', date: '2024-02-10', outcome: 'Pass' },
+            { type: 'Final-Building', date: '2024-03-10', outcome: 'Pass' },
+          ],
+        },
+      ],
+      reviews: [
+        {
+          id: '1',
+          customerName: 'Sarah Wilson',
+          customerOrg: 'Wilson Properties',
+          rating: 5,
+          comment: 'Excellent work quality and communication. Finished on time and within budget.',
+          date: '2024-01-20',
+          verified: true,
+        },
+      ],
+      availability: 'Immediate',
+      hourlyRate: 85,
+      serviceAreas: ['Austin', 'Round Rock', 'Cedar Park'],
+      verified: true,
+      lastUpdated: '2024-02-15',
+      challengeStatus: 'None',
+    };
+    setProfile(mockProfile);
+    setLoading(false);
   }, []);
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/contractor-portal/dashboard', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        setContractor(data.contractor);
-      } else {
-        setError(data.message || 'Failed to fetch dashboard data');
-      }
-    } catch (err) {
-      setError('Network error occurred');
-    } finally {
-      setLoading(false);
+  const handleEdit = () => {
+    setFormData({
+      name: profile?.name || '',
+      company: profile?.company || '',
+      email: profile?.email || '',
+      phone: profile?.phone || '',
+      address: profile?.address || '',
+      city: profile?.city || '',
+      state: profile?.state || '',
+      zip: profile?.zip || '',
+      trades: profile?.trades || [],
+      yearsExperience: profile?.yearsExperience || 0,
+      hourlyRate: profile?.hourlyRate || 0,
+      serviceAreas: profile?.serviceAreas || [],
+      availability: profile?.availability || '',
+    });
+    setEditing(true);
+  };
+
+  const handleSave = () => {
+    // In a real app, this would make an API call
+    setProfile(prev => prev ? { ...prev, ...formData } : null);
+    setEditing(false);
+    setSnackbarMessage('Profile updated successfully!');
+    setSnackbarOpen(true);
+  };
+
+  const handleCancel = () => {
+    setEditing(false);
+  };
+
+  const handleChallenge = () => {
+    setChallengeOpen(true);
+  };
+
+  const handleSubmitChallenge = () => {
+    // In a real app, this would make an API call
+    setSnackbarMessage('Score challenge submitted for review!');
+    setSnackbarOpen(true);
+    setChallengeOpen(false);
+    setChallengeReason('');
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 90) return theme.palette.success.main;
+    if (score >= 80) return theme.palette.warning.main;
+    if (score >= 70) return theme.palette.error.main;
+    return theme.palette.grey[500];
+  };
+
+  const getComplianceColor = (tier: string) => {
+    switch (tier) {
+      case 'A': return theme.palette.success.main;
+      case 'B': return theme.palette.warning.main;
+      case 'C': return theme.palette.error.main;
+      default: return theme.palette.grey[500];
     }
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
-
-  const handleEditToggle = () => {
-    setEditing(!editing);
-  };
-
-  const handleSaveProfile = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/contractor-portal/profile', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(contractor)
-      });
-      
-      if (response.ok) {
-        setEditing(false);
-        await fetchDashboardData();
-      } else {
-        const data = await response.json();
-        setError(data.message || 'Failed to update profile');
-      }
-    } catch (err) {
-      setError('Network error occurred');
-    }
-  };
-
-  const handleSubmitChallenge = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/contractor-portal/challenges', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(challengeForm)
-      });
-      
-      if (response.ok) {
-        setChallengeDialog(false);
-        setChallengeForm({ challengeType: '', description: '', evidence: '' });
-        await fetchDashboardData();
-      } else {
-        const data = await response.json();
-        setError(data.message || 'Failed to submit challenge');
-      }
-    } catch (err) {
-      setError('Network error occurred');
-    }
-  };
-
-  const getGradeColor = (grade: string) => {
-    switch (grade) {
-      case 'A': return 'success';
-      case 'B': return 'info';
-      case 'C': return 'warning';
-      case 'D': return 'error';
-      case 'F': return 'error';
-      default: return 'default';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'PENDING': return 'warning';
-      case 'UNDER_REVIEW': return 'info';
-      case 'APPROVED': return 'success';
-      case 'REJECTED': return 'error';
-      case 'RESOLVED': return 'success';
-      default: return 'default';
-    }
-  };
+  const stats = [
+    {
+      title: 'Overall Score',
+      value: profile?.overallScore || 0,
+      icon: <StarIcon />,
+      color: getScoreColor(profile?.overallScore || 0),
+    },
+    {
+      title: 'Compliance Tier',
+      value: profile?.complianceTier || 'C',
+      icon: <SecurityIcon />,
+      color: getComplianceColor(profile?.complianceTier || 'C'),
+    },
+    {
+      title: 'Years Experience',
+      value: profile?.yearsExperience || 0,
+      icon: <TimelineIcon />,
+      color: theme.palette.primary.main,
+    },
+    {
+      title: 'Completed Projects',
+      value: profile?.permits?.filter(p => p.status === 'Finaled').length || 0,
+      icon: <CheckCircleIcon />,
+      color: theme.palette.success.main,
+    },
+  ];
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-        <Button variant="contained" onClick={() => navigate('/login')}>
-          Go to Login
-        </Button>
-      </Container>
-    );
-  }
-
-  if (!contractor) {
-    return (
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Alert severity="info">
-          No contractor data found. Please contact support.
-        </Alert>
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+          <LinearProgress sx={{ width: '100%' }} />
+        </Box>
       </Container>
     );
   }
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Box>
-          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-            🏗️ Contractor Portal
-          </Typography>
-          <Typography variant="h6" color="text.secondary">
-            Welcome back, {contractor.name}
-          </Typography>
+      {/* Header */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box>
+            <Typography variant="h4" fontWeight={700} gutterBottom>
+              Contractor Portal
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Manage your profile and track your performance
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={() => window.location.reload()}
+            >
+              Refresh Data
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={editing ? <SaveIcon /> : <EditIcon />}
+              onClick={editing ? handleSave : handleEdit}
+              sx={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                },
+              }}
+            >
+              {editing ? 'Save Changes' : 'Edit Profile'}
+            </Button>
+          </Box>
         </Box>
-        <Button
-          variant="outlined"
-          startIcon={<EditIcon />}
-          onClick={handleEditToggle}
-        >
-          {editing ? 'Cancel' : 'Edit Profile'}
-        </Button>
       </Box>
 
-      {/* Dashboard Overview */}
+      {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={3}>
+        {stats.map((stat, index) => (
+          <Grid item xs={12} sm={6} md={3} key={index}>
+            <Card
+              sx={{
+                background: `linear-gradient(135deg, ${alpha(stat.color, 0.1)} 0%, ${alpha(stat.color, 0.05)} 100%)`,
+                border: `1px solid ${alpha(stat.color, 0.2)}`,
+              }}
+            >
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Avatar sx={{ backgroundColor: stat.color, mr: 2 }}>
+                    {stat.icon}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h4" fontWeight={700} color={stat.color}>
+                      {stat.value}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {stat.title}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      <Grid container spacing={3}>
+        {/* Profile Information */}
+        <Grid item xs={12} md={8}>
           <Card>
             <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <TrendingUpIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Overall Score</Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6">
+                  Profile Information
+                </Typography>
+                {profile?.challengeStatus === 'None' && (
+                  <Button
+                    variant="outlined"
+                    color="warning"
+                    onClick={handleChallenge}
+                  >
+                    Challenge Score
+                  </Button>
+                )}
               </Box>
-              <Typography variant="h3" color="primary" fontWeight="bold">
-                {contractor.overallScore}%
-              </Typography>
-              <Chip
-                label={`Grade: ${contractor.overallGrade}`}
-                color={getGradeColor(contractor.overallGrade) as any}
-                size="small"
-                sx={{ mt: 1 }}
-              />
+
+              <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} sx={{ mb: 3 }}>
+                <Tab label="Basic Info" />
+                <Tab label="Verification" />
+                <Tab label="Performance" />
+                <Tab label="Reviews" />
+              </Tabs>
+
+              {tabValue === 0 && (
+                <Box>
+                  {editing ? (
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Full Name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Company"
+                          value={formData.company}
+                          onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Phone"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          label="Address"
+                          value={formData.address}
+                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          label="City"
+                          value={formData.city}
+                          onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <FormControl fullWidth>
+                          <InputLabel>State</InputLabel>
+                          <Select
+                            value={formData.state}
+                            onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                            label="State"
+                          >
+                            <MenuItem value="TX">Texas</MenuItem>
+                            <MenuItem value="CA">California</MenuItem>
+                            <MenuItem value="FL">Florida</MenuItem>
+                            <MenuItem value="NY">New York</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          label="ZIP Code"
+                          value={formData.zip}
+                          onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <FormControl fullWidth>
+                          <InputLabel>Trades</InputLabel>
+                          <Select
+                            multiple
+                            value={formData.trades}
+                            onChange={(e) => setFormData({ ...formData, trades: e.target.value as string[] })}
+                            label="Trades"
+                          >
+                            <MenuItem value="General Contractor">General Contractor</MenuItem>
+                            <MenuItem value="Electrical">Electrical</MenuItem>
+                            <MenuItem value="Plumbing">Plumbing</MenuItem>
+                            <MenuItem value="HVAC">HVAC</MenuItem>
+                            <MenuItem value="Framing">Framing</MenuItem>
+                            <MenuItem value="Drywall">Drywall</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Years Experience"
+                          type="number"
+                          value={formData.yearsExperience}
+                          onChange={(e) => setFormData({ ...formData, yearsExperience: parseInt(e.target.value) || 0 })}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Hourly Rate"
+                          type="number"
+                          value={formData.hourlyRate}
+                          onChange={(e) => setFormData({ ...formData, hourlyRate: parseInt(e.target.value) || 0 })}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <FormControl fullWidth>
+                          <InputLabel>Availability</InputLabel>
+                          <Select
+                            value={formData.availability}
+                            onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
+                            label="Availability"
+                          >
+                            <MenuItem value="Immediate">Immediate</MenuItem>
+                            <MenuItem value="<2 weeks"><2 weeks</MenuItem>
+                            <MenuItem value="<1 month"><1 month</MenuItem>
+                            <MenuItem value="<3 months"><3 months</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                          <Button onClick={handleCancel}>Cancel</Button>
+                          <Button variant="contained" onClick={handleSave}>
+                            Save Changes
+                          </Button>
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  ) : (
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} md={6}>
+                        <List>
+                          <ListItem sx={{ px: 0 }}>
+                            <ListItemIcon>
+                              <BusinessIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="Company" secondary={profile?.company} />
+                          </ListItem>
+                          <ListItem sx={{ px: 0 }}>
+                            <ListItemIcon>
+                              <EmailIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="Email" secondary={profile?.email} />
+                          </ListItem>
+                          <ListItem sx={{ px: 0 }}>
+                            <ListItemIcon>
+                              <PhoneIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="Phone" secondary={profile?.phone} />
+                          </ListItem>
+                        </List>
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <List>
+                          <ListItem sx={{ px: 0 }}>
+                            <ListItemIcon>
+                              <LocationIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="Address" secondary={`${profile?.address}, ${profile?.city}, ${profile?.state} ${profile?.zip}`} />
+                          </ListItem>
+                          <ListItem sx={{ px: 0 }}>
+                            <ListItemIcon>
+                              <WorkIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="Trades" secondary={profile?.trades.join(', ')} />
+                          </ListItem>
+                          <ListItem sx={{ px: 0 }}>
+                            <ListItemIcon>
+                              <AttachMoneyIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="Hourly Rate" secondary={`$${profile?.hourlyRate}/hr`} />
+                          </ListItem>
+                        </List>
+                      </Grid>
+                    </Grid>
+                  )}
+                </Box>
+              )}
+
+              {tabValue === 1 && profile && (
+                <Box>
+                  <Typography variant="h6" gutterBottom>
+                    License Verification
+                  </Typography>
+                  {profile.licenses.map((license) => (
+                    <Accordion key={license.id}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                          <Typography variant="subtitle1" sx={{ flex: 1 }}>
+                            {license.type} - {license.number}
+                          </Typography>
+                          <Chip
+                            label={license.status}
+                            color={license.status === 'Active' ? 'success' : 'error'}
+                            size="small"
+                            sx={{ mr: 2 }}
+                          />
+                          {license.verified && <VerifiedIcon sx={{ color: 'success.main' }} />}
+                        </Box>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Grid container spacing={2}>
+                          <Grid item xs={6}>
+                            <Typography variant="body2" color="text.secondary">
+                              State: {license.state}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Issue Date: {new Date(license.issueDate).toLocaleDateString()}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Typography variant="body2" color="text.secondary">
+                              Expiration: {new Date(license.expirationDate).toLocaleDateString()}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Source: {license.source}
+                            </Typography>
+                          </Grid>
+                        </Grid>
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
+
+                  <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+                    Insurance Coverage
+                  </Typography>
+                  {profile.insurance.map((insurance) => (
+                    <Accordion key={insurance.id}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                          <Typography variant="subtitle1" sx={{ flex: 1 }}>
+                            {insurance.type} - {insurance.carrier}
+                          </Typography>
+                          <Chip
+                            label={insurance.coverageBand}
+                            color="primary"
+                            size="small"
+                            sx={{ mr: 2 }}
+                          />
+                          {insurance.verified && <VerifiedIcon sx={{ color: 'success.main' }} />}
+                        </Box>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Grid container spacing={2}>
+                          <Grid item xs={6}>
+                            <Typography variant="body2" color="text.secondary">
+                              Policy: {insurance.policyNumber}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Coverage: ${insurance.coverageAmount.toLocaleString()}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Typography variant="body2" color="text.secondary">
+                              Effective: {new Date(insurance.effectiveDate).toLocaleDateString()}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Expires: {new Date(insurance.expirationDate).toLocaleDateString()}
+                            </Typography>
+                          </Grid>
+                        </Grid>
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
+                </Box>
+              )}
+
+              {tabValue === 2 && profile && (
+                <Box>
+                  <Typography variant="h6" gutterBottom>
+                    Performance Metrics
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={4}>
+                      <Card>
+                        <CardContent sx={{ textAlign: 'center' }}>
+                          <Typography variant="h3" fontWeight={700} color="primary">
+                            {profile.overallScore}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Overall Score
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Card>
+                        <CardContent sx={{ textAlign: 'center' }}>
+                          <Typography variant="h3" fontWeight={700} color="success.main">
+                            {profile.permits.filter(p => p.status === 'Finaled').length}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Completed Projects
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Card>
+                        <CardContent sx={{ textAlign: 'center' }}>
+                          <Typography variant="h3" fontWeight={700} color="warning.main">
+                            {Math.round(profile.permits.reduce((sum, p) => sum + p.daysOpen, 0) / profile.permits.length || 0)}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Avg Days per Project
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  </Grid>
+                </Box>
+              )}
+
+              {tabValue === 3 && profile && (
+                <Box>
+                  <Typography variant="h6" gutterBottom>
+                    Customer Reviews
+                  </Typography>
+                  {profile.reviews.map((review) => (
+                    <Card key={review.id} sx={{ mb: 2 }}>
+                      <CardContent>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                          <Typography variant="subtitle1" fontWeight={600}>
+                            {review.customerName}
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Rating value={review.rating} readOnly size="small" />
+                            {review.verified && <VerifiedIcon sx={{ ml: 1, color: 'success.main', fontSize: 16 }} />}
+                          </Box>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          {review.customerOrg} • {new Date(review.date).toLocaleDateString()}
+                        </Typography>
+                        <Typography variant="body2">
+                          {review.comment}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
+              )}
             </CardContent>
           </Card>
         </Grid>
-        
-        <Grid item xs={12} md={3}>
+
+        {/* Quick Actions */}
+        <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <PeopleIcon color="secondary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Peer Ranking</Typography>
-              </Box>
-              <Typography variant="h3" color="secondary" fontWeight="bold">
-                #{contractor.peerRanking.rank}
+              <Typography variant="h6" gutterBottom>
+                Quick Actions
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                of {contractor.peerRanking.total} peers ({contractor.peerRanking.percentile}th percentile)
-              </Typography>
+              <List>
+                <ListItem button>
+                  <ListItemIcon>
+                    <RefreshIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Refresh Verification" />
+                </ListItem>
+                <ListItem button>
+                  <ListItemIcon>
+                    <AssignmentIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="View All Permits" />
+                </ListItem>
+                <ListItem button>
+                  <ListItemIcon>
+                    <PeopleIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="View All Reviews" />
+                </ListItem>
+                <ListItem button>
+                  <ListItemIcon>
+                    <ScheduleIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Update Availability" />
+                </ListItem>
+              </List>
             </CardContent>
           </Card>
-        </Grid>
-        
-        <Grid item xs={12} md={3}>
-          <Card>
+
+          <Card sx={{ mt: 2 }}>
             <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <WorkIcon color="info" sx={{ mr: 1 }} />
-                <Typography variant="h6">Projects</Typography>
-              </Box>
-              <Typography variant="h3" color="info.main" fontWeight="bold">
-                {contractor.projectCount}
+              <Typography variant="h6" gutterBottom>
+                Score Challenge
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Total completed
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                If you believe your score is incorrect, you can submit a challenge for review.
               </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <StarIcon color="warning" sx={{ mr: 1 }} />
-                <Typography variant="h6">Reviews</Typography>
-              </Box>
-              <Typography variant="h3" color="warning.main" fontWeight="bold">
-                {contractor.reviewCount}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Customer reviews
-              </Typography>
+              <Button
+                fullWidth
+                variant="outlined"
+                color="warning"
+                onClick={handleChallenge}
+                disabled={profile?.challengeStatus !== 'None'}
+              >
+                {profile?.challengeStatus === 'None' ? 'Challenge Score' : 'Challenge Submitted'}
+              </Button>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="portal tabs">
-          <Tab icon={<DashboardIcon />} label="Overview" />
-          <Tab icon={<BusinessIcon />} label="Profile" />
-          <Tab icon={<StarIcon />} label="Reviews" />
-          <Tab icon={<GavelIcon />} label="Challenges" />
-        </Tabs>
-      </Box>
-
-      {/* Overview Tab */}
-      <TabPanel value={tabValue} index={0}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Recent Reviews
-                </Typography>
-                {contractor.reviews.length > 0 ? (
-                  <List>
-                    {contractor.reviews.slice(0, 5).map((review) => (
-                      <ListItem key={review.id}>
-                        <ListItemIcon>
-                          <StarIcon color="warning" />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={
-                            <Box display="flex" alignItems="center" gap={1}>
-                              <Rating value={review.stars} readOnly size="small" />
-                              <Typography variant="body2" color="text.secondary">
-                                {new Date(review.createdAt).toLocaleDateString()}
-                              </Typography>
-                            </Box>
-                          }
-                          secondary={review.comment || 'No comment provided'}
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
-                ) : (
-                  <Typography color="text.secondary">
-                    No reviews yet
-                  </Typography>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Recent Challenges
-                </Typography>
-                {contractor.challenges.length > 0 ? (
-                  <List>
-                    {contractor.challenges.slice(0, 5).map((challenge) => (
-                      <ListItem key={challenge.id}>
-                        <ListItemIcon>
-                          <GavelIcon />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={challenge.challengeType.replace('_', ' ')}
-                          secondary={
-                            <Box>
-                              <Typography variant="body2" color="text.secondary">
-                                {challenge.description}
-                              </Typography>
-                              <Chip
-                                label={challenge.status}
-                                color={getStatusColor(challenge.status) as any}
-                                size="small"
-                                sx={{ mt: 1 }}
-                              />
-                            </Box>
-                          }
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
-                ) : (
-                  <Typography color="text.secondary">
-                    No challenges submitted
-                  </Typography>
-                )}
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={() => setChallengeDialog(true)}
-                  sx={{ mt: 2 }}
-                >
-                  Submit Challenge
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      </TabPanel>
-
-      {/* Profile Tab */}
-      <TabPanel value={tabValue} index={1}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Profile Information
-            </Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Name"
-                  value={contractor.name}
-                  disabled={!editing}
-                  onChange={(e) => setContractor(prev => prev ? { ...prev, name: e.target.value } : null)}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Company Name"
-                  value={contractor.companyName || ''}
-                  disabled={!editing}
-                  onChange={(e) => setContractor(prev => prev ? { ...prev, companyName: e.target.value } : null)}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Phone"
-                  value={contractor.phone || ''}
-                  disabled={!editing}
-                  onChange={(e) => setContractor(prev => prev ? { ...prev, phone: e.target.value } : null)}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Email"
-                  value={contractor.email || ''}
-                  disabled={!editing}
-                  onChange={(e) => setContractor(prev => prev ? { ...prev, email: e.target.value } : null)}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Years in Business"
-                  type="number"
-                  value={contractor.yearsInBusiness || ''}
-                  disabled={!editing}
-                  onChange={(e) => setContractor(prev => prev ? { ...prev, yearsInBusiness: parseInt(e.target.value) || 0 } : null)}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Website"
-                  value={contractor.website || ''}
-                  disabled={!editing}
-                  onChange={(e) => setContractor(prev => prev ? { ...prev, website: e.target.value } : null)}
-                />
-              </Grid>
-            </Grid>
-            
-            {editing && (
-              <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-                <Button
-                  variant="contained"
-                  startIcon={<SaveIcon />}
-                  onClick={handleSaveProfile}
-                >
-                  Save Changes
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={() => setEditing(false)}
-                >
-                  Cancel
-                </Button>
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      </TabPanel>
-
-      {/* Reviews Tab */}
-      <TabPanel value={tabValue} index={2}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Customer Reviews
-            </Typography>
-            {contractor.reviews.length > 0 ? (
-              <List>
-                {contractor.reviews.map((review) => (
-                  <ListItem key={review.id} divider>
-                    <ListItemIcon>
-                      <StarIcon color="warning" />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={
-                        <Box display="flex" alignItems="center" gap={2}>
-                          <Rating value={review.stars} readOnly />
-                          <Typography variant="body2" color="text.secondary">
-                            {new Date(review.createdAt).toLocaleDateString()}
-                          </Typography>
-                          {review.project && (
-                            <Chip label={review.project.title} size="small" variant="outlined" />
-                          )}
-                        </Box>
-                      }
-                      secondary={review.comment || 'No comment provided'}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            ) : (
-              <Typography color="text.secondary">
-                No reviews yet
-              </Typography>
-            )}
-          </CardContent>
-        </Card>
-      </TabPanel>
-
-      {/* Challenges Tab */}
-      <TabPanel value={tabValue} index={3}>
-        <Card>
-          <CardContent>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h6">
-                Ranking Challenges
-              </Typography>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => setChallengeDialog(true)}
-              >
-                Submit Challenge
-              </Button>
-            </Box>
-            {contractor.challenges.length > 0 ? (
-              <List>
-                {contractor.challenges.map((challenge) => (
-                  <ListItem key={challenge.id} divider>
-                    <ListItemIcon>
-                      <GavelIcon />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={
-                        <Box display="flex" alignItems="center" gap={2}>
-                          <Typography variant="subtitle1">
-                            {challenge.challengeType.replace('_', ' ')}
-                          </Typography>
-                          <Chip
-                            label={challenge.status}
-                            color={getStatusColor(challenge.status) as any}
-                            size="small"
-                          />
-                        </Box>
-                      }
-                      secondary={
-                        <Box>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                            {challenge.description}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Submitted: {new Date(challenge.createdAt).toLocaleDateString()}
-                          </Typography>
-                          {challenge.adminNotes && (
-                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                              Admin Notes: {challenge.adminNotes}
-                            </Typography>
-                          )}
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            ) : (
-              <Typography color="text.secondary">
-                No challenges submitted yet
-              </Typography>
-            )}
-          </CardContent>
-        </Card>
-      </TabPanel>
-
       {/* Challenge Dialog */}
-      <Dialog open={challengeDialog} onClose={() => setChallengeDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Submit Ranking Challenge</DialogTitle>
+      <Dialog open={challengeOpen} onClose={() => setChallengeOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Challenge Your Score</DialogTitle>
         <DialogContent>
-          <Grid container spacing={3} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Challenge Type</InputLabel>
-                <Select
-                  value={challengeForm.challengeType}
-                  onChange={(e) => setChallengeForm(prev => ({ ...prev, challengeType: e.target.value }))}
-                  label="Challenge Type"
-                >
-                  {challengeTypes.map(type => (
-                    <MenuItem key={type} value={type}>
-                      {type.replace('_', ' ')}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                multiline
-                rows={4}
-                label="Description"
-                value={challengeForm.description}
-                onChange={(e) => setChallengeForm(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Please describe your challenge in detail..."
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Evidence (URL)"
-                value={challengeForm.evidence}
-                onChange={(e) => setChallengeForm(prev => ({ ...prev, evidence: e.target.value }))}
-                placeholder="Link to supporting documents (optional)"
-              />
-            </Grid>
-          </Grid>
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            label="Reason for Challenge"
+            value={challengeReason}
+            onChange={(e) => setChallengeReason(e.target.value)}
+            placeholder="Please explain why you believe your score is incorrect..."
+            sx={{ mt: 2 }}
+          />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setChallengeDialog(false)}>Cancel</Button>
-          <Button 
-            variant="contained" 
-            onClick={handleSubmitChallenge}
-            disabled={!challengeForm.challengeType || !challengeForm.description}
-          >
+          <Button onClick={() => setChallengeOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleSubmitChallenge}>
             Submit Challenge
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
+      >
+        <Alert onClose={() => setSnackbarOpen(false)} severity="success">
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

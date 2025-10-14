@@ -1,460 +1,533 @@
 const express = require('express');
-const { body, validationResult } = require('express-validator');
-const prisma = require('../prisma');
-const auth = require('../middleware/auth');
-const { calculatePermitBasedScore, getContractorSpecializations, analyzePermitPatterns } = require('../utils/permitEvaluation');
-
 const router = express.Router();
+const { PrismaClient } = require('@prisma/client');
+const ContractorVerificationService = require('../utils/contractorVerification');
+const ContractorScoringService = require('../utils/contractorScoring');
 
-// Get all contractors with scores
-router.get('/', auth, async (req, res) => {
+const prisma = new PrismaClient();
+const verificationService = new ContractorVerificationService();
+const scoringService = new ContractorScoringService();
+
+// Middleware to verify JWT token
+const authenticateToken = require('../middleware/auth');
+
+/**
+ * @route GET /api/contractors
+ * @desc Get all contractors with search and filtering
+ * @access Private
+ */
+router.get('/', authenticateToken, async (req, res) => {
   try {
-    const { trade, areaId, sort = 'score' } = req.query;
-    
-    const whereClause = {};
-    if (trade) {
-      whereClause.trades = {
-        has: trade
-      };
+    const {
+      search,
+      state,
+      trade,
+      experienceLevel,
+      minScore,
+      page = 1,
+      limit = 20,
+      sortBy = 'overallScore',
+      sortOrder = 'desc'
+    } = req.query;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const take = parseInt(limit);
+
+    // Build where clause
+    const where = {
+      verified: true
+    };
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { company: { contains: search, mode: 'insensitive' } },
+        { trades: { has: search } }
+      ];
     }
 
-    const contractors = await prisma.contractor.findMany({
-      where: whereClause,
-      include: {
-        licenses: {
-          where: { adminVerified: true },
-          orderBy: { verifiedAt: 'desc' }
-        },
-        policies: {
-          where: {
-            expiresOn: {
-              gte: new Date()
-            }
-          },
-          orderBy: { expiresOn: 'asc' }
-        },
-        areaScores: areaId ? {
-          where: { areaId }
-        } : true,
-        _count: {
-          select: {
-            reviews: true,
-            projects: true
-          }
+    if (state) {
+      where.state = state;
+    }
+
+    if (trade) {
+      where.trades = { has: trade };
+    }
+
+    if (experienceLevel) {
+      where.experienceLevel = experienceLevel;
+    }
+
+    if (minScore) {
+      where.overallScore = { gte: parseInt(minScore) };
+    }
+
+    // Build orderBy clause
+    const orderBy = {};
+    orderBy[sortBy] = sortOrder;
+
+    const [contractors, total] = await Promise.all([
+      prisma.contractor.findMany({
+        where,
+        skip,
+        take,
+        orderBy,
+        include: {
+          licenses: true,
+          insurance: true,
+          legalEvents: true,
+          permits: true,
+          reviews: true
         }
-      },
-      orderBy: sort === 'score' ? {
-        areaScores: {
-          _count: 'desc'
-        }
-      } : {
-        name: 'asc'
+      }),
+      prisma.contractor.count({ where })
+    ]);
+
+    res.json({
+      contractors,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
       }
     });
-
-    // Calculate overall scores and grades with experience factors
-    const contractorsWithScores = contractors.map(contractor => {
-      const latestScore = contractor.areaScores?.[0];
-      const hasActiveLicense = contractor.licenses.some(l => l.status === 'ACTIVE');
-      const hasActiveInsurance = contractor.policies.length > 0;
-      
-      // Calculate experience score
-      const experienceScore = calculateExperienceScore(
-        contractor.totalProjects, 
-        contractor.yearsInBusiness, 
-        contractor.totalValue
-      );
-      
-      return {
-        ...contractor,
-        overallScore: latestScore?.score || 0,
-        overallGrade: latestScore?.grade || 'F',
-        hasActiveLicense,
-        hasActiveInsurance,
-        experienceScore,
-        reviewCount: contractor._count.reviews,
-        projectCount: contractor._count.projects
-      };
-    });
-
-    res.json(contractorsWithScores);
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Server error');
+    console.error('Error fetching contractors:', error);
+    res.status(500).json({ error: 'Failed to fetch contractors' });
   }
 });
 
-// Get single contractor with detailed info
-router.get('/:id', auth, async (req, res) => {
+/**
+ * @route GET /api/contractors/:id
+ * @desc Get contractor by ID with full details
+ * @access Private
+ */
+router.get('/:id', authenticateToken, async (req, res) => {
   try {
+    const { id } = req.params;
+
     const contractor = await prisma.contractor.findUnique({
-      where: { id: req.params.id },
+      where: { id },
       include: {
-        licenses: {
-          orderBy: { verifiedAt: 'desc' }
-        },
-        policies: {
-          orderBy: { expiresOn: 'asc' }
-        },
-        legalEvents: {
-          orderBy: { filedOn: 'desc' }
-        },
-        contacts: true,
-        areaScores: {
-          include: {
-            area: true
-          },
-          orderBy: { updatedAt: 'desc' }
-        },
-        reviews: {
-          include: {
-            project: true
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 10
-        },
+        licenses: true,
+        insurance: true,
+        legalEvents: true,
         permits: {
           include: {
-            inspections: {
-              orderBy: { scheduledDate: 'desc' }
-            }
-          },
-          orderBy: { requestedDate: 'desc' },
-          take: 20
-        },
-        workSpecializations: {
-          orderBy: { permitCount: 'desc' }
-        },
-        insurancePermitCorrelations: {
-          include: {
-            permit: {
-              select: {
-                id: true,
-                permitNumber: true,
-                permitType: true,
-                requestedDate: true
-              }
-            },
-            insurancePolicy: {
-              select: {
-                id: true,
-                type: true,
-                insurerName: true,
-                policyNumber: true
-              }
-            }
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 10
-        },
-        projects: {
-          select: {
-            id: true,
-            trade: true,
-            status: true,
-            budgetPlanned: true,
-            budgetActual: true,
-            plannedStart: true,
-            plannedEnd: true,
-            actualStart: true,
-            actualEnd: true
+            inspections: true
           }
         },
-        _count: {
-          select: {
-            reviews: true,
-            projects: true,
-            permits: true
-          }
-        }
+        reviews: true
       }
     });
 
     if (!contractor) {
-      return res.status(404).json({ message: 'Contractor not found' });
+      return res.status(404).json({ error: 'Contractor not found' });
     }
 
-    // Calculate enhanced scores with experience factors
-    const riskScore = calculateRiskScore(
-      contractor.legalEvents, 
-      contractor.totalProjects, 
-      contractor.yearsInBusiness
-    );
-    const insuranceScore = calculateInsuranceScore(contractor.policies);
-    const experienceScore = calculateExperienceScore(
-      contractor.totalProjects, 
-      contractor.yearsInBusiness, 
-      contractor.totalValue
-    );
-    
-    // Calculate enhanced permit-based scoring
-    const permitEvaluation = calculatePermitBasedScore(contractor);
-    
-    // Get work specializations with rankings
-    const specializations = await getContractorSpecializations(contractor.id);
-    
-    // Analyze permit patterns
-    const permitPatterns = analyzePermitPatterns(contractor.permits);
-    
-    const latestScore = contractor.areaScores?.[0];
-    
-    res.json({
-      ...contractor,
-      overallScore: permitEvaluation.enhancedScore,
-      overallGrade: calculateGrade(permitEvaluation.enhancedScore),
-      riskScore,
-      insuranceScore,
-      experienceScore,
-      reviewCount: contractor._count.reviews,
-      projectCount: contractor._count.projects,
-      permitCount: contractor._count.permits,
-      // Enhanced permit-based data
-      permitEvaluation,
-      specializations,
-      permitPatterns,
-      // Legacy scores for backward compatibility
-      legacyScore: latestScore?.score || 0,
-      legacyGrade: latestScore?.grade || 'F'
-    });
+    res.json(contractor);
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Server error');
+    console.error('Error fetching contractor:', error);
+    res.status(500).json({ error: 'Failed to fetch contractor' });
   }
 });
 
-// Create contractor
-router.post('/', [
-  auth,
-  body('name').notEmpty().withMessage('Name is required'),
-  body('companyName').optional(),
-  body('phone').optional(),
-  body('email').optional().isEmail().withMessage('Valid email required'),
-  body('trades').isArray().withMessage('Trades must be an array')
-], async (req, res) => {
+/**
+ * @route POST /api/contractors
+ * @desc Create new contractor
+ * @access Private
+ */
+router.post('/', authenticateToken, async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+    const {
+      name,
+      company,
+      email,
+      phone,
+      address,
+      city,
+      state,
+      zip,
+      trades,
+      licenseNumber,
+      licenseType,
+      hourlyRate,
+      serviceAreas
+    } = req.body;
 
+    // Create contractor
     const contractor = await prisma.contractor.create({
-      data: req.body
+      data: {
+        name,
+        company,
+        email,
+        phone,
+        address,
+        city,
+        state,
+        zip,
+        trades,
+        licenseNumber,
+        licenseType,
+        hourlyRate: hourlyRate ? parseFloat(hourlyRate) : null,
+        serviceAreas,
+        verified: false,
+        overallScore: 0,
+        complianceTier: 'C',
+        experienceLevel: 'New',
+        yearsExperience: 0,
+        availability: 'Unknown',
+        createdBy: req.user.id
+      }
+    });
+
+    res.status(201).json(contractor);
+  } catch (error) {
+    console.error('Error creating contractor:', error);
+    res.status(500).json({ error: 'Failed to create contractor' });
+  }
+});
+
+/**
+ * @route PUT /api/contractors/:id
+ * @desc Update contractor
+ * @access Private
+ */
+router.put('/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const contractor = await prisma.contractor.update({
+      where: { id },
+      data: updateData
     });
 
     res.json(contractor);
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Server error');
+    console.error('Error updating contractor:', error);
+    res.status(500).json({ error: 'Failed to update contractor' });
   }
 });
 
-// Add license to contractor
-router.post('/:id/licenses', [
-  auth,
-  body('number').notEmpty().withMessage('License number is required'),
-  body('state').notEmpty().withMessage('State is required'),
-  body('boardName').optional(),
-  body('expiresOn').optional().isISO8601().withMessage('Valid date required')
-], async (req, res) => {
+/**
+ * @route DELETE /api/contractors/:id
+ * @desc Delete contractor
+ * @access Private
+ */
+router.delete('/:id', authenticateToken, async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+    const { id } = req.params;
+
+    await prisma.contractor.delete({
+      where: { id }
+    });
+
+    res.json({ message: 'Contractor deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting contractor:', error);
+    res.status(500).json({ error: 'Failed to delete contractor' });
+  }
+});
+
+/**
+ * @route POST /api/contractors/:id/verify
+ * @desc Verify contractor with state databases
+ * @access Private
+ */
+router.post('/:id/verify', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get contractor data
+    const contractor = await prisma.contractor.findUnique({
+      where: { id }
+    });
+
+    if (!contractor) {
+      return res.status(404).json({ error: 'Contractor not found' });
     }
 
-    const license = await prisma.contractorLicense.create({
+    // Start verification process
+    const verificationResult = await verificationService.verifyContractor({
+      id: contractor.id,
+      name: contractor.name,
+      company: contractor.company,
+      state: contractor.state,
+      city: contractor.city,
+      licenseNumber: contractor.licenseNumber,
+      licenseType: contractor.licenseType
+    });
+
+    // Calculate new score
+    const scoreData = scoringService.calculateOverallScore({
+      license: verificationResult.license,
+      insurance: verificationResult.insurance,
+      legal: verificationResult.legal,
+      permits: verificationResult.permits,
+      reviews: { reviews: contractor.reviews || [] },
+      experience: {
+        yearsExperience: contractor.yearsExperience,
+        specializations: contractor.trades
+      },
+      lastUpdated: new Date().toISOString()
+    });
+
+    // Update contractor with verification results
+    const updatedContractor = await prisma.contractor.update({
+      where: { id },
       data: {
-        ...req.body,
-        contractorId: req.params.id
+        verified: verificationResult.overallVerified,
+        overallScore: scoreData.overallScore,
+        complianceTier: scoreData.grade.charAt(0).toUpperCase(),
+        lastVerified: new Date().toISOString()
       }
     });
 
-    res.json(license);
+    // Store verification details
+    if (verificationResult.license && verificationResult.license.verified) {
+      await prisma.license.upsert({
+        where: {
+          contractorId_type_number: {
+            contractorId: id,
+            type: verificationResult.license.type,
+            number: verificationResult.license.number
+          }
+        },
+        update: verificationResult.license,
+        create: {
+          ...verificationResult.license,
+          contractorId: id
+        }
+      });
+    }
+
+    if (verificationResult.insurance && verificationResult.insurance.verified) {
+      for (const policy of verificationResult.insurance.policies) {
+        await prisma.insurance.upsert({
+          where: {
+            contractorId_type_policyNumber: {
+              contractorId: id,
+              type: policy.type,
+              policyNumber: policy.policyNumber
+            }
+          },
+          update: policy,
+          create: {
+            ...policy,
+            contractorId: id
+          }
+        });
+      }
+    }
+
+    if (verificationResult.legal && verificationResult.legal.events) {
+      for (const event of verificationResult.legal.events) {
+        await prisma.legalEvent.upsert({
+          where: {
+            contractorId_type_date: {
+              contractorId: id,
+              type: event.type,
+              date: event.date
+            }
+          },
+          update: event,
+          create: {
+            ...event,
+            contractorId: id
+          }
+        });
+      }
+    }
+
+    if (verificationResult.permits && verificationResult.permits.permits) {
+      for (const permit of verificationResult.permits.permits) {
+        await prisma.permit.upsert({
+          where: {
+            contractorId_city_number: {
+              contractorId: id,
+              city: permit.city,
+              number: permit.number
+            }
+          },
+          update: permit,
+          create: {
+            ...permit,
+            contractorId: id
+          }
+        });
+      }
+    }
+
+    res.json({
+      contractor: updatedContractor,
+      verification: verificationResult,
+      score: scoreData
+    });
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Server error');
+    console.error('Error verifying contractor:', error);
+    res.status(500).json({ error: 'Failed to verify contractor' });
   }
 });
 
-// Add insurance policy to contractor
-router.post('/:id/policies', [
-  auth,
-  body('type').notEmpty().withMessage('Insurance type is required'),
-  body('insurerName').notEmpty().withMessage('Insurer name is required'),
-  body('policyNumber').optional(),
-  body('coverageEachOccur').optional().isNumeric().withMessage('Coverage must be numeric'),
-  body('coverageAggregate').optional().isNumeric().withMessage('Coverage must be numeric'),
-  body('expiresOn').optional().isISO8601().withMessage('Valid date required')
-], async (req, res) => {
+/**
+ * @route GET /api/contractors/:id/explain-score
+ * @desc Get detailed score explanation for contractor
+ * @access Private
+ */
+router.get('/:id/explain-score', authenticateToken, async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+    const { id } = req.params;
 
-    const policy = await prisma.insurancePolicy.create({
-      data: {
-        ...req.body,
-        contractorId: req.params.id
+    const contractor = await prisma.contractor.findUnique({
+      where: { id },
+      include: {
+        licenses: true,
+        insurance: true,
+        legalEvents: true,
+        permits: {
+          include: {
+            inspections: true
+          }
+        },
+        reviews: true
       }
     });
 
-    res.json(policy);
+    if (!contractor) {
+      return res.status(404).json({ error: 'Contractor not found' });
+    }
+
+    // Calculate score breakdown
+    const scoreData = scoringService.calculateOverallScore({
+      license: contractor.licenses[0] || {},
+      insurance: { policies: contractor.insurance || [] },
+      legal: { events: contractor.legalEvents || [] },
+      permits: { permits: contractor.permits || [] },
+      reviews: { reviews: contractor.reviews || [] },
+      experience: {
+        yearsExperience: contractor.yearsExperience,
+        specializations: contractor.trades
+      },
+      lastUpdated: contractor.lastVerified || contractor.createdAt
+    });
+
+    const explanation = scoringService.generateScoreExplanation(scoreData);
+
+    res.json(explanation);
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Server error');
+    console.error('Error explaining contractor score:', error);
+    res.status(500).json({ error: 'Failed to explain contractor score' });
   }
 });
 
-// Add legal event to contractor
-router.post('/:id/legal-events', [
-  auth,
-  body('type').notEmpty().withMessage('Legal type is required'),
-  body('severity').notEmpty().withMessage('Severity is required'),
-  body('title').notEmpty().withMessage('Title is required'),
-  body('courtOrAgency').optional(),
-  body('caseNumber').optional(),
-  body('filedOn').optional().isISO8601().withMessage('Valid date required'),
-  body('amount').optional().isNumeric().withMessage('Amount must be numeric')
-], async (req, res) => {
+/**
+ * @route POST /api/contractors/:id/reviews
+ * @desc Add review for contractor
+ * @access Private
+ */
+router.post('/:id/reviews', authenticateToken, async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+    const { id } = req.params;
+    const { rating, comment, projectId } = req.body;
 
-    const legalEvent = await prisma.legalEvent.create({
+    const review = await prisma.review.create({
       data: {
-        ...req.body,
-        contractorId: req.params.id
+        contractorId: id,
+        customerId: req.user.id,
+        projectId,
+        rating: parseInt(rating),
+        comment,
+        verified: true
       }
     });
 
-    res.json(legalEvent);
+    // Recalculate contractor score
+    const contractor = await prisma.contractor.findUnique({
+      where: { id },
+      include: { reviews: true }
+    });
+
+    const scoreData = scoringService.calculateOverallScore({
+      license: contractor.licenses?.[0] || {},
+      insurance: { policies: contractor.insurance || [] },
+      legal: { events: contractor.legalEvents || [] },
+      permits: { permits: contractor.permits || [] },
+      reviews: { reviews: contractor.reviews || [] },
+      experience: {
+        yearsExperience: contractor.yearsExperience,
+        specializations: contractor.trades
+      },
+      lastUpdated: contractor.lastVerified || contractor.createdAt
+    });
+
+    await prisma.contractor.update({
+      where: { id },
+      data: {
+        overallScore: scoreData.overallScore,
+        complianceTier: scoreData.grade.charAt(0).toUpperCase()
+      }
+    });
+
+    res.status(201).json(review);
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Server error');
+    console.error('Error adding review:', error);
+    res.status(500).json({ error: 'Failed to add review' });
   }
 });
 
-// Trigger contractor enrichment
-router.post('/:id/enrich', auth, async (req, res) => {
+/**
+ * @route GET /api/contractors/stats/overview
+ * @desc Get contractor marketplace statistics
+ * @access Private
+ */
+router.get('/stats/overview', authenticateToken, async (req, res) => {
   try {
-    // This would trigger the enrichment process
-    // For now, just return success
-    res.json({ message: 'Enrichment triggered', contractorId: req.params.id });
+    const [
+      totalContractors,
+      verifiedContractors,
+      avgScore,
+      tierAContractors,
+      recentVerifications,
+      topTrades
+    ] = await Promise.all([
+      prisma.contractor.count(),
+      prisma.contractor.count({ where: { verified: true } }),
+      prisma.contractor.aggregate({
+        _avg: { overallScore: true }
+      }),
+      prisma.contractor.count({ where: { complianceTier: 'A' } }),
+      prisma.contractor.count({
+        where: {
+          lastVerified: {
+            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
+          }
+        }
+      }),
+      prisma.contractor.groupBy({
+        by: ['trades'],
+        _count: { trades: true },
+        orderBy: { _count: { trades: 'desc' } },
+        take: 5
+      })
+    ]);
+
+    res.json({
+      totalContractors,
+      verifiedContractors,
+      avgScore: Math.round(avgScore._avg.overallScore || 0),
+      tierAContractors,
+      recentVerifications,
+      topTrades: topTrades.map(t => ({
+        trade: t.trades[0],
+        count: t._count.trades
+      }))
+    });
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Server error');
+    console.error('Error fetching contractor stats:', error);
+    res.status(500).json({ error: 'Failed to fetch contractor statistics' });
   }
 });
-
-// Helper functions
-function calculateRiskScore(legalEvents, totalProjects = 0, yearsInBusiness = 0) {
-  if (!legalEvents || legalEvents.length === 0) return 100;
-  
-  let score = 100;
-  const now = new Date();
-  
-  // Calculate experience normalization factor
-  const experienceFactor = calculateExperienceFactor(totalProjects, yearsInBusiness);
-  
-  for (const event of legalEvents) {
-    const monthsSinceEvent = Math.floor((now - new Date(event.filedOn || event.createdAt)) / (1000 * 60 * 60 * 24 * 30));
-    const timeDecay = Math.exp(-monthsSinceEvent / 24);
-    
-    let penalty = 0;
-    switch (event.severity) {
-      case 'CRITICAL':
-        penalty = 35;
-        break;
-      case 'HIGH':
-        penalty = 20;
-        break;
-      case 'MEDIUM':
-        penalty = 10;
-        break;
-      case 'LOW':
-        penalty = 5;
-        break;
-    }
-    
-    // Apply experience normalization - more experienced contractors get reduced penalties
-    const normalizedPenalty = penalty * (1 - experienceFactor);
-    score -= normalizedPenalty * timeDecay;
-  }
-  
-  return Math.max(0, Math.round(score));
-}
-
-function calculateExperienceFactor(totalProjects, yearsInBusiness) {
-  // Experience factor ranges from 0 (no experience) to 0.5 (very experienced)
-  // This reduces penalties for contractors with more experience
-  
-  let projectFactor = 0;
-  if (totalProjects > 0) {
-    // Logarithmic scaling: more projects = diminishing returns
-    projectFactor = Math.min(0.3, Math.log10(totalProjects) * 0.1);
-  }
-  
-  let yearsFactor = 0;
-  if (yearsInBusiness > 0) {
-    // Linear scaling up to 20 years, then capped
-    yearsFactor = Math.min(0.2, yearsInBusiness * 0.01);
-  }
-  
-  return Math.min(0.5, projectFactor + yearsFactor);
-}
-
-function calculateExperienceScore(totalProjects, yearsInBusiness, totalValue) {
-  let score = 0;
-  
-  // Years in business (0-40 points)
-  if (yearsInBusiness > 0) {
-    score += Math.min(40, yearsInBusiness * 2);
-  }
-  
-  // Project volume (0-30 points)
-  if (totalProjects > 0) {
-    // Logarithmic scaling for project count
-    score += Math.min(30, Math.log10(totalProjects) * 15);
-  }
-  
-  // Project value (0-30 points)
-  if (totalValue && totalValue > 0) {
-    // Logarithmic scaling for project value (in millions)
-    const valueInMillions = Number(totalValue) / 1000000;
-    score += Math.min(30, Math.log10(valueInMillions + 1) * 15);
-  }
-  
-  return Math.min(100, score);
-}
-
-function calculateInsuranceScore(policies) {
-  if (!policies || policies.length === 0) return 0;
-  
-  const activePolicies = policies.filter(p => 
-    p.expiresOn && new Date(p.expiresOn) > new Date()
-  );
-  
-  if (activePolicies.length === 0) return 30;
-  
-  const hasGL = activePolicies.some(p => p.type === 'GL');
-  const hasWC = activePolicies.some(p => p.type === 'WC');
-  
-  let score = 0;
-  if (hasGL) {
-    const glPolicy = activePolicies.find(p => p.type === 'GL');
-    const coverage = glPolicy.coverageEachOccur || 0;
-    if (coverage >= 2000000) score += 100;
-    else if (coverage >= 1000000) score += 80;
-    else if (coverage >= 500000) score += 60;
-    else score += 40;
-  }
-  
-  if (hasWC) score += 5;
-  
-  return Math.min(100, score);
-}
 
 module.exports = router;
