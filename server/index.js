@@ -101,24 +101,11 @@ app.use('/api/webhooks', require('./routes/webhooks'));
 
 // Do NOT serve the React app from the API unless explicitly enabled.
 // On Render we deploy only the API; frontend lives on Vercel.
-const buildDir = path.join(__dirname, '../client/build');
-const indexHtml = path.join(buildDir, 'index.html');
-console.log('[startup] SERVE_CLIENT=', process.env.SERVE_CLIENT);
-console.log('[startup] index.html exists? ', fs.existsSync(indexHtml), 'at', indexHtml);
-if (process.env.SERVE_CLIENT === 'true') {
-  if (fs.existsSync(indexHtml)) {
-    app.use(express.static(buildDir));
-    app.get('*', (req, res) => {
-      res.sendFile(indexHtml);
-    });
-  } else {
-    console.warn('SERVE_CLIENT is true, but index.html was not found at', indexHtml);
-  }
-}
+// Do not serve the React build from this API service. Frontend is hosted separately.
 
 // Simple root route for API base
 app.get('/', (req, res) => {
-  res.json({ status: 'ok', service: 'homeflip-api' });
+  res.status(200).send('HomeFlip API is running');
 });
 
 // Sentry error handler middleware (must be before other error handlers)
