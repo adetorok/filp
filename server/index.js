@@ -20,9 +20,8 @@ const asyncHandler = (fn) => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-// Sentry request handler middleware (must be first)
-// Use Sentry's request handler to create a tracing and error scope per request
-app.use(Sentry.Handlers.requestHandler());
+// Sentry request handler middleware (must be first) - v8 API
+app.use(Sentry.expressRequestHandler());
 
 // Middleware
 app.use(requestId);
@@ -108,8 +107,13 @@ app.get('/', (req, res) => {
   res.status(200).send('HomeFlip API is running');
 });
 
-// Sentry error handler middleware (must be before other error handlers)
-app.use(Sentry.Handlers.errorHandler());
+// Debug endpoint for testing Sentry (must be before error handlers)
+app.get("/debug-sentry", function mainHandler(req, res) {
+  throw new Error("My first Sentry error!");
+});
+
+// Sentry error handler middleware (must be before other error handlers) - v8 API
+app.use(Sentry.expressErrorHandler());
 
 // 404 handler for API routes
 app.use('/api/*', (req, res) => {
@@ -142,11 +146,6 @@ app.use(function onError(err, req, res, next) {
       ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     }
   });
-});
-
-// Debug endpoint for testing Sentry
-app.get("/debug-sentry", function mainHandler(req, res) {
-  throw new Error("My first Sentry error!");
 });
 
 // Simple health check

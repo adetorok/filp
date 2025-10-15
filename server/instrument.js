@@ -11,6 +11,10 @@ try {
       environment: process.env.NODE_ENV || "development",
       sendDefaultPii: true,
       tracesSampleRate: 1.0,
+      integrations: [
+        Sentry.httpIntegration(),
+        Sentry.expressIntegration(),
+      ],
     });
   } else {
     // If DSN is not provided, export shims below
@@ -19,10 +23,8 @@ try {
 } catch (err) {
   // No Sentry in this runtime; export minimal shims
   Sentry = {
-    Handlers: {
-      requestHandler: () => (req, res, next) => next(),
-      errorHandler: () => (err, req, res, next) => next(err),
-    },
+    expressRequestHandler: () => (req, res, next) => next(),
+    expressErrorHandler: () => (err, req, res, next) => next(err),
     captureException: () => {},
   };
 }
