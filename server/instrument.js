@@ -5,14 +5,17 @@ try {
   // This file must be imported before any other imports
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   Sentry = require("@sentry/node");
-  Sentry.init({
-    dsn:
-      process.env.SENTRY_DSN_BACKEND ||
-      "https://bc9fd595b3761684158e312f0e7a023d@o4510179879092224.ingest.us.sentry.io/4510179922214913",
-    environment: process.env.NODE_ENV || "development",
-    sendDefaultPii: true,
-    tracesSampleRate: 1.0,
-  });
+  if (process.env.SENTRY_DSN_BACKEND) {
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN_BACKEND,
+      environment: process.env.NODE_ENV || "development",
+      sendDefaultPii: true,
+      tracesSampleRate: 1.0,
+    });
+  } else {
+    // If DSN is not provided, export shims below
+    throw new Error("SENTRY_DSN_BACKEND not set");
+  }
 } catch (err) {
   // No Sentry in this runtime; export minimal shims
   Sentry = {

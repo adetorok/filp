@@ -21,8 +21,8 @@ const asyncHandler = (fn) => (req, res, next) => {
 };
 
 // Sentry request handler middleware (must be first)
-// Note: Sentry v10 uses different middleware syntax
-// app.use(Sentry.requestHandler());
+// Use Sentry's request handler to create a tracing and error scope per request
+app.use(Sentry.Handlers.requestHandler());
 
 // Middleware
 app.use(requestId);
@@ -103,11 +103,14 @@ app.use('/api/webhooks', require('./routes/webhooks'));
 // On Render we deploy only the API; frontend lives on Vercel.
 if (process.env.SERVE_CLIENT === 'true') {
   const buildDir = path.join(__dirname, '../client/build');
-  if (fs.existsSync(buildDir)) {
+  const indexHtml = path.join(buildDir, 'index.html');
+  if (fs.existsSync(indexHtml)) {
     app.use(express.static(buildDir));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(buildDir, 'index.html'));
+      res.sendFile(indexHtml);
     });
+  } else {
+    console.warn('SERVE_CLIENT is true, but index.html was not found at', indexHtml);
   }
 }
 
@@ -117,8 +120,7 @@ app.get('/', (req, res) => {
 });
 
 // Sentry error handler middleware (must be before other error handlers)
-// Note: Sentry v10 uses different middleware syntax
-// app.use(Sentry.errorHandler());
+app.use(Sentry.Handlers.errorHandler());
 
 // 404 handler for API routes
 app.use('/api/*', (req, res) => {
