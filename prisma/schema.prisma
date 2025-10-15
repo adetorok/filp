@@ -1,6 +1,6 @@
 generator client {
   provider   = "prisma-client-js"
-  engineType = "library" // Use Node-API engine to avoid WASM/binary issues on Render
+  engineType = "binary" // Force native binary engine to avoid WASM issues in Render build
 }
 
 datasource db {
