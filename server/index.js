@@ -111,8 +111,6 @@ app.get("/debug-sentry", function mainHandler(req, res) {
   throw new Error("My first Sentry error!");
 });
 
-// Sentry error handler middleware (must be before other error handlers) - v8 API
-app.use(Sentry.expressErrorHandler());
 
 // 404 handler for API routes
 app.use('/api/*', (req, res) => {
@@ -126,6 +124,9 @@ app.use('/api/*', (req, res) => {
     });
   }
 });
+
+// Sentry error handler middleware (must be before generic error handler) - v8 API
+app.use(Sentry.expressErrorHandler());
 
 // Error handler (must be last)
 app.use(function onError(err, req, res, next) {
