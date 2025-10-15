@@ -23,11 +23,13 @@ services:
       - key: REACT_APP_API_URL
         value: https://homeflip-api.onrender.com
       - key: REACT_APP_SENTRY_DSN
-        value: https://bc9fd595b3761684158e312f0e7a023d@o4510179879092224.ingest.us.sentry.io/4510179922214913
+        value: https://36fcfb23e19d8222430874875426fa6d@o4510179879092224.ingest.us.sentry.io/4510192784310272
       - key: SENTRY_DSN_BACKEND
-        value: https://bc9fd595b3761684158e312f0e7a023d@o4510179879092224.ingest.us.sentry.io/4510179922214913
+        value: https://36fcfb23e19d8222430874875426fa6d@o4510179879092224.ingest.us.sentry.io/4510192784310272
+      - key: SENTRY_DSN
+        value: https://36fcfb23e19d8222430874875426fa6d@o4510179879092224.ingest.us.sentry.io/4510192784310272
       - key: FRONTEND_URL
-        value: https://filp-9j9g9.vercel.app
+        value: https://filp-9jg9.vercel.app
       - key: SERVE_CLIENT
         value: "false"
 

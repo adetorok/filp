@@ -1,11 +1,10 @@
-// IMPORTANT: Import Sentry first, before any other imports
-require('./instrument');
+// IMPORTANT: Import Sentry first (exports initialized SDK or shims)
+const Sentry = require('./instrument');
 
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const Sentry = require('@sentry/node');
 const prisma = require('./prisma');
 const { securityHeaders, authLimiter, searchLimiter, writeLimiter } = require('./middleware/security');
 const { requestId, responseTime } = require('./middleware/response');
