@@ -3,8 +3,10 @@ services:
     name: homeflip-api
     env: node
     plan: free
-    buildCommand: npm install --legacy-peer-deps && npx prisma generate && npx prisma migrate deploy
-    startCommand: node server/index.js
+    # Keep build independent of DATABASE_URL and force Prisma engines.
+    buildCommand: npm install --legacy-peer-deps && PRISMA_CLI_QUERY_ENGINE_TYPE=binary PRISMA_CLIENT_ENGINE_TYPE=library PRISMA_GENERATE_ENGINE_TYPE=library npx prisma generate
+    # Run migrations at startup with explicit engine types.
+    startCommand: PRISMA_CLI_QUERY_ENGINE_TYPE=binary PRISMA_CLIENT_ENGINE_TYPE=library PRISMA_GENERATE_ENGINE_TYPE=library node -e "console.log('prisma migrate deploy...')" && PRISMA_CLI_QUERY_ENGINE_TYPE=binary PRISMA_CLIENT_ENGINE_TYPE=library PRISMA_GENERATE_ENGINE_TYPE=library npx prisma migrate deploy && node server/index.js
     envVars:
       - key: NODE_ENV
         value: production
