@@ -101,9 +101,11 @@ app.use('/api/webhooks', require('./routes/webhooks'));
 
 // Do NOT serve the React app from the API unless explicitly enabled.
 // On Render we deploy only the API; frontend lives on Vercel.
+const buildDir = path.join(__dirname, '../client/build');
+const indexHtml = path.join(buildDir, 'index.html');
+console.log('[startup] SERVE_CLIENT=', process.env.SERVE_CLIENT);
+console.log('[startup] index.html exists? ', fs.existsSync(indexHtml), 'at', indexHtml);
 if (process.env.SERVE_CLIENT === 'true') {
-  const buildDir = path.join(__dirname, '../client/build');
-  const indexHtml = path.join(buildDir, 'index.html');
   if (fs.existsSync(indexHtml)) {
     app.use(express.static(buildDir));
     app.get('*', (req, res) => {
